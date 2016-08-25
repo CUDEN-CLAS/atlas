@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Atlas'
-copyright = u'2016, James Fuller'
+copyright = u'2016, University of Colorado Boulder'
 author = u'James Fuller'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -336,3 +336,14 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
+
+import sys
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = ['python-ldap']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
