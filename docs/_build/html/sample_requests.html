@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Sample requests &#8212; Atlas 1.0.0-rc1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0-rc1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Atlas 1.0.0-rc1 documentation" href="index.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sample-requests">
+<h1>Sample requests<a class="headerlink" href="#sample-requests" title="Permalink to this headline">¶</a></h1>
+<p>### Code items
+Drupal core 7.42
+^^^^^^^^^^^^^^^^
+::
+curl -i -v -X POST -d &#8216;{&#8220;git_url&#8221;: &#8220;<a class="reference external" href="mailto:git&#37;&#52;&#48;github&#46;com">git<span>&#64;</span>github<span>&#46;</span>com</a>:CuBoulder/drupal-7.x.git&#8221;, &#8220;commit_hash&#8221;: &#8220;9ee4a1a2fa3bedb3852d21f2198509c107c48890&#8221;, &#8220;meta&#8221;:{&#8220;version&#8221;: &#8220;7.42&#8221;, &#8220;code_type&#8221;: &#8220;core&#8221;, &#8220;name&#8221;: &#8220;drupal&#8221;, &#8220;is_current&#8221;: true}}&#8217; -H &#8216;Content-Type: application/json&#8217; -u &#8216;USERNAME:PASSWORD&#8217; http://inventory.local/atlas/code</p>
+<div class="section" id="express-2-2-5">
+<h2>Express 2.2.5<a class="headerlink" href="#express-2-2-5" title="Permalink to this headline">¶</a></h2>
+<p>::
+curl -i -v -X POST -d &#8216;{&#8220;git_url&#8221;: &#8220;<a class="reference external" href="mailto:git&#37;&#52;&#48;github&#46;com">git<span>&#64;</span>github<span>&#46;</span>com</a>:CuBoulder/express.git&#8221;, &#8220;commit_hash&#8221;: &#8220;5f1fb979cacff22d6641da3c413696d02f9cc5f5&#8221;, &#8220;meta&#8221;:{&#8220;version&#8221;: &#8220;2.2.5&#8221;, &#8220;code_type&#8221;: &#8220;profile&#8221;, &#8220;name&#8221;: &#8220;express&#8221;, &#8220;is_current&#8221;: true}}&#8217; -H &#8216;Content-Type: application/json&#8217; -u &#8216;USERNAME:PASSWORD&#8217; http://inventory.local/atlas/code</p>
+<p>### Site items
+Create a Site
+^^^^^^^^^^^^^
+::
+curl -i -v -X POST -d &#8216;{&#8220;status&#8221;: &#8220;pending&#8221;}&#8217; -H &#8216;Content-Type: application/json&#8217; -u &#8216;USERNAME:PASSWORD&#8217; http://inventory.local/atlas/sites</p>
+</div>
+<div class="section" id="patch-a-site-to-installed">
+<h2>Patch a Site to &#8216;installed&#8217;<a class="headerlink" href="#patch-a-site-to-installed" title="Permalink to this headline">¶</a></h2>
+<p>::
+curl -i -v -X PATCH -d &#8216;{&#8220;status&#8221;: &#8220;installed&#8221;}&#8217; -H &#8220;If-Match: 4173813fc614292febc79241a8b677266cbed826&#8221; -H &#8216;Content-Type: application/json&#8217; -u &#8216;USERNAME:PASSWORD&#8217; http://inventory.local/atlas/sites/579b8f9a89b0dc0d7d7ce090</p>
+</div>
+<div class="section" id="patch-a-new-profile-in-update-site-to-new-version-of-profile">
+<h2>Patch a new Profile in (update site to new version of profile)<a class="headerlink" href="#patch-a-new-profile-in-update-site-to-new-version-of-profile" title="Permalink to this headline">¶</a></h2>
+<p>::
+curl -i -v -X PATCH -d &#8216;{&#8220;code&#8221;: {&#8220;profile&#8221;: &#8220;57adffc389b0dc1631822bce&#8221;}}&#8217; -H &#8220;If-Match: b8c1942d0238559ca9c3333626777ec7ce97f955&#8221; -H &#8216;Content-Type: application/json&#8217; -u &#8216;USERNAME:PASSWORD&#8217; http://inventory.local/atlas/sites/57adff1389b0dc1613d0f948</p>
+</div>
+<div class="section" id="delete-a-site">
+<h2>Delete a site<a class="headerlink" href="#delete-a-site" title="Permalink to this headline">¶</a></h2>
+<p>::
+curl -i -v -X PATCH -d &#8216;{&#8220;status&#8221;:&#8221;delete&#8221;}&#8217; -H &#8220;If-Match: 5b3bc91045cca9fdc9a8b50bfb4095ecceb2dcbe&#8221; -H &#8216;Content-Type: application/json&#8217; -u &#8216;USERNAME:PASSWORD&#8217; http://inventory.local/atlas/sites/57adfdb789b0dc1612c23a90</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sample requests</a><ul>
+<li><a class="reference internal" href="#express-2-2-5">Express 2.2.5</a></li>
+<li><a class="reference internal" href="#patch-a-site-to-installed">Patch a Site to &#8216;installed&#8217;</a></li>
+<li><a class="reference internal" href="#patch-a-new-profile-in-update-site-to-new-version-of-profile">Patch a new Profile in (update site to new version of profile)</a></li>
+<li><a class="reference internal" href="#delete-a-site">Delete a site</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sample_requests.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, James Fuller.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/sample_requests.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

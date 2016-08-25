@@ -24,6 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Atlas 1.0.0-rc1 documentation" href="#" />
+    <link rel="next" title="Installation" href="installation.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -43,6 +44,16 @@
 <h1>Welcome to Atlas&#8217;s documentation!<a class="headerlink" href="#welcome-to-atlas-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sample_requests.html">Sample requests</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sample_requests.html#express-2-2-5">Express 2.2.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample_requests.html#patch-a-site-to-installed">Patch a Site to &#8216;installed&#8217;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample_requests.html#patch-a-new-profile-in-update-site-to-new-version-of-profile">Patch a new Profile in (update site to new version of profile)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample_requests.html#delete-a-site">Delete a site</a></li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -52,6 +63,43 @@
 <li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
 <li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
 </ul>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>See [Express_local](<a class="reference external" href="https://github.com/CuBoulder/express_local">https://github.com/CuBoulder/express_local</a>) for setting up a local development environment.</p>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>Code items should be created first. Required fields are: git URL, commit hash, Name, Version, and Type (core, profile, module, theme, library). Optional fields are: is_current (allows you to indicate the preferred version of a code item) and a tagging field.</p>
+<p>Site items are created with a &#8216;pending&#8217; status and can be assigned a specific core and/or profile when created. If a core or profile is not specified, the &#8216;current&#8217; version of the default is used.</p>
+</div>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Chronological tasks run to keep a small number of instances available for assignment to end users.</li>
+<li>POST to create additional instances on demand.</li>
+<li>Available instances are replaced every night.</li>
+<li>Code, Site, and Command items are versioned.</li>
+</ul>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Prefers to receive JSON encoded POST request.</li>
+<li>CRUD Web Express instances</li>
+</ul>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>Configuration is split between various files <cite>config_*.py</cite>. You need to create a <cite>config_local.py</cite> file and will most likely want to replace <cite>config_servers.py</cite>.</p>
+</div>
+<div class="section" id="deploying-atlas">
+<h2>Deploying Atlas<a class="headerlink" href="#deploying-atlas" title="Permalink to this headline">¶</a></h2>
+<p>Currently we use a <cite>git pull</cite> deployment. When code is changed, you need to restart Celery, Celerybeat and Apache.</p>
+</div>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
+<p>Pull requests are always welcome. Project is under active development. We want to make sure that Express doesn&#8217;t become dependant on Atlas.</p>
+</div>
 </div>
 
 
@@ -63,12 +111,22 @@
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Welcome to Atlas&#8217;s documentation!</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#getting-started">Getting started</a></li>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#api">API</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+<li><a class="reference internal" href="#deploying-atlas">Deploying Atlas</a></li>
+<li><a class="reference internal" href="#contributing">Contributing</a></li>
+</ul>
+</li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="next chapter">Installation</a></li>
   </ul></li>
 </ul>
 </div>
