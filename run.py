@@ -287,8 +287,13 @@ Setup the application and logging.
 """
 # Tell Eve to use Basic Auth and where our data structure is defined.
 app = Eve(auth=utilities.AtlasBasicAuth, settings="/data/code/atlas/config_data_structure.py")
-# TODO: Remove debug mode.
-app.debug = True
+# Enable logging to 'atlas.log' file
+handler = logging.FileHandler('atlas.log')
+# The default log level is set to WARNING, so we have to explicitly set the
+# logging level to Debug.
+app.logger.setLevel(logging.DEBUG)
+# Append the handler to the default application logger
+app.logger.addHandler(handler)
 
 # Specific callbacks. Pattern is: `atlas.on_{Hook}_{Method}_{Resource}`
 # Use pre event hooks if there is a chance you want to abort.
@@ -314,16 +319,3 @@ def custom409(error):
     response = jsonify({'message': error.description})
     response.status_code = 409
     return response
-
-
-if __name__ == '__main__':
-    # Enable logging to 'atlas.log' file
-    handler = logging.FileHandler('atlas.log')
-    # The default log level is set to WARNING, so we have to explicitly set the
-    # logging level to Debug.
-    app.logger.setLevel(logging.DEBUG)
-    # Append the handler to the default application logger
-    app.logger.addHandler(handler)
-
-    # This goes last.
-    app.run(host='0.0.0.0', ssl_context='adhoc')
