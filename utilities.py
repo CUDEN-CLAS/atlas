@@ -49,7 +49,8 @@ class AtlasBasicAuth(BasicAuth):
             else:
                 current_app.logger.error(e)
 
-        ldap_distinguished_name = "uid={0},ou={1},{2}".format(username, ldap_org_unit, ldap_dns_domain_name)
+        #ldap_distinguished_name = "uid={0},ou={1},{2}".format(username, ldap_org_unit, ldap_dns_domain_name)
+        ldap_distinguished_name = "CN={0},OU=users,OU=DEANS,OU=CLAS,dc=ucdenver,dc=pvt".format(username)
         current_app.logger.debug(ldap_distinguished_name)
 
         # Add the username as a Flask application global.

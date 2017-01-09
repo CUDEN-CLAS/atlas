@@ -257,7 +257,7 @@ def site_launch(site):
         print ('Site launch - No GSA')
         _launch_site(site=site)
 
-    if environment is not 'local':
+    if environment is not 'test':
         print ('Diff f5')
         _diff_f5()
         print ('Update f5')
@@ -493,7 +493,7 @@ def _remove_symlink(symlink):
 
 # TODO: Add decorator to run on a single host.
 def _create_database(site):
-    if environment != 'local':
+    if environment != 'test':
         os.environ['MYSQL_TEST_LOGIN_FILE'] = '/home/{0}/.mylogin.cnf'.format(
             ssh_user)
         mysql_login_path = "{0}_{1}".format(database_user, environment)
@@ -509,13 +509,13 @@ def _create_database(site):
             site['sid'])
         local("{0} \"{1}\"".format(mysql_info, sql))
     else:
-        with settings(host_string='express.local'):
+        with settings(host_string='clas-test.ucdenver.pvt'):
             run("mysql -e 'create database `{}`;'".format(site['sid']))
 
 
 # TODO: Add decorator to run on a single host.
 def _delete_database(site):
-    if environment != 'local':
+    if environment != 'test':
         # TODO: Make file location config.
         os.environ['MYSQL_TEST_LOGIN_FILE'] = '/home/{0}/.mylogin.cnf'.format(
             ssh_user)
@@ -530,7 +530,7 @@ def _delete_database(site):
             site['sid'],
             database_password))
     else:
-        with settings(host_string='express.local'):
+        with settings(host_string='clas-test.ucdenver.pvt'):
             run("mysql -e 'DROP DATABASE IF EXISTS `{}`;'".format(site['sid']))
 
 
