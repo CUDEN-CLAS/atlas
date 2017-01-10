@@ -8,7 +8,7 @@ $conf['page_cache_maximum_age'] = {{page_cache_maximum_age}};
 // Define tmp directory
 $conf['file_temporary_path'] = '/wwwng/sitefiles/{{sid}}/tmp';
 
-{% if environment != 'local' %}
+{% if environment != 'test' %}
 $databases['default']['default'] = array(
   'driver' => 'mysql',
   'database' => '{{ sid }}',

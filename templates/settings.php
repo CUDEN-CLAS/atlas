@@ -23,10 +23,10 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
       header('Location: http://www.colorado.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
-    elseif ($_SERVER['HTTP_HOST'] == 'www-test.colorado.edu' &&
+    elseif ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
-      header('Location: http://www-test.colorado.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      header('Location: http://clas-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
     elseif ($_SERVER['HTTP_HOST'] == 'www-dev.colorado.edu' &&
@@ -128,7 +128,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
       case 'cust_test':
         $conf['environment_indicator_text'] = 'TEST';
         $conf['environment_indicator_color'] = 'yellow';
-        $base_url .= 'www-test.colorado.edu';
+        $base_url .= 'clas-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
@@ -168,7 +168,7 @@ $conf['reverse_proxy_addresses'] = array({% for ip in reverse_proxies -%}'{{ip}}
 $conf['reverse_proxy_header'] = 'X-Forwarded-For';
 // Define Varnish Server Pool and version.
 $conf['varnish_control_terminal'] = '{{varnish_control}}';
-$conf['varnish_version'] = 3;
+$conf['varnish_version'] = 4;
 {% if environment == 'local' %}
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
 {% endif %}

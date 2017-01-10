@@ -435,7 +435,7 @@ def update_database(site):
 
 @roles('webservers')
 def clear_apc():
-    run("wget -q -O - http://localhost/sysadmintools/apc/clearapc.php")
+    run("wget -q -O - http://localhost/sysadmintools/opcache/clear_opcache.php")
 
 
 def drush_cache_clear(sid):
