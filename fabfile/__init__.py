@@ -606,7 +606,7 @@ def _push_settings_files(site, directory):
 def _install_site(profile_name, code_directory_current):
     with cd(code_directory_current):
         run('drush site-install -y {0}'.format(profile_name))
-        run('drush rr')
+        run('drush php-eval "registry_rebuild();"')
 
 
 def _clone_repo(git_url, checkout_item, destination):
