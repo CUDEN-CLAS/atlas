@@ -239,6 +239,21 @@ def site_profile_update(site, original, updates):
 
 
 @roles('webservers')
+def site_profile_swap(site):
+    print('Site Profile Update\n{0}'.format(site))
+    code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
+    profile = utilities.get_single_eve('code', site['code']['profile'])
+    new_profile_full_string = _get_code_name_version(site['code']['profile'])
+
+    with cd(code_directory_sid + '/profiles'):
+        run("rm {0}; ln -s {1}/profiles/{2}/{3} {2}".format(
+            profile['meta']['name'],
+            code_root,
+            profile['meta']['name'],
+            new_profile_full_string))
+
+
+@roles('webservers')
 def site_launch(site):
     update_settings_file(site)
 
@@ -276,6 +291,7 @@ def site_backup(site):
         site['type'],
         site['sid'])
     date_string = datetime.now().strftime("%Y-%m-%d")
+    date_time_string = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
     backup_path = '{0}/{1}/{2}'.format(
         backup_directory,
         site['sid'],
@@ -283,18 +299,18 @@ def site_backup(site):
     database_result_file_path = '{0}/{1}_{2}.sql'.format(
         backup_path,
         site['sid'],
-        date_string)
+        date_time_string)
     files_result_file_path = '{0}/{1}_{2}.tar.gz'.format(
         backup_path,
         site['sid'],
-        date_string)
+        date_time_string)
     nfs_dir = nfs_mount_location[environment]
     nfs_files_dir = '{0}/sitefiles/{1}/files'.format(nfs_dir, site['sid'])
     # Start the actual process.
     _create_directory_structure(backup_path)
     with cd(web_directory):
         run('drush sql-dump --result-file={0}'.format(database_result_file_path))
-        run('tar cfz {0} {1}'.format(files_result_file_path, nfs_files_dir))
+        run('tar -czf {0} {1}'.format(files_result_file_path, nfs_files_dir))
 
 
 @roles('webservers')
@@ -445,15 +461,35 @@ def drush_cache_clear(sid):
 
 
 @roles('webservers')
+def change_files_owner(site):
+    print('Change File Owners\n{0}'.format(site))
+    code_directory = '{0}/{1}'.format(sites_code_root, site['sid'])
+    # Change the owner when it matches the old deployment user.
+    run("sudo chown -R --from={0} {1}:{2} {3}".format(former_user, ssh_user, webserver_user_group, code_directory))
+
+
+@roles('webservers')
+def rewrite_symlinks(site):
+    print('Rewrite symlinks\n{0}'.format(site))
+    code_directory_current = '{0}/{1}/current'.format(sites_code_root, site['sid'])
+    web_directory = '{0}/{1}/{2}'.format(sites_web_root, site['type'], site['sid'])
+    _update_symlink(code_directory_current, web_directory)
+    if site['status'] == 'launched':
+        path_symlink = '{0}/{1}/{2}'.format(sites_web_root, site['type'], site['path'])
+        _update_symlink(web_directory, path_symlink)
+    with cd(web_directory):
+        run("drush rr")
+
+
+@roles('webservers')
 def update_settings_file(site):
     print('Update Settings Files\n{0}'.format(site))
-    code_directory = '{0}/{1}'.format(sites_code_root, site['sid'])
-    code_directory_current = '{0}/current'.format(code_directory)
+    code_directory = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     profile = utilities.get_single_eve('code', site['code']['profile'])
     profile_name = profile['meta']['name']
 
     _create_settings_files(site, profile_name)
-    _push_settings_files(site, code_directory_current)
+    _push_settings_files(site, code_directory)
 
 
 @roles('webservers')
@@ -591,6 +627,7 @@ def _create_settings_files(site, profile_name):
 
 
 def _push_settings_files(site, directory):
+    print('Push settings\n{0}\n{1}'.format(site, directory))
     send_from = '/tmp/{0}'.format(site['sid'])
     send_to = "{0}/sites/default".format(directory)
     run("chmod -R 755 {0}".format(send_to))
@@ -623,6 +660,7 @@ def _checkout_repo(checkout_item, destination):
         checkout_item))
     with cd(destination):
         run('git reset --hard')
+        run('git fetch --all')
         run('git checkout {0}'.format(checkout_item))
         run('git clean -f -f -d')
 
