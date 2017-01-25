@@ -551,7 +551,7 @@ def _create_database(site):
             site['sid'])
         local("{0} \"{1}\"".format(mysql_info, sql))
     else:
-        with settings(host_string='clas-test.ucdenver.pvt'):
+        with settings(host_string='clas-testlocal.ucdenver.pvt'):
             run("mysql -e 'create database `{}`;'".format(site['sid']))
 
 
@@ -570,7 +570,7 @@ def _delete_database(site):
             mysql_info,
             site['sid']))
     else:
-        with settings(host_string='clas-test.ucdenver.pvt'):
+        with settings(host_string='clas-testlocal.ucdenver.pvt'):
             run("mysql -e 'DROP DATABASE IF EXISTS `{}`;'".format(site['sid']))
 
 
