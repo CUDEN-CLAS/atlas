@@ -37,7 +37,6 @@ X_HEADERS = ['Access-Control-Allow-Origin']
 code_schema = {
     'meta': {
         'type': 'dict',
-        'required': True,
         'unique': True,
         'schema': {
             'name': {
@@ -58,6 +57,7 @@ code_schema = {
             'is_current': {
                 'type': 'boolean',
                 'default': False,
+                'required': True,
             },
             'tag': {
                 'type': 'list',
@@ -119,7 +119,6 @@ sites_schema = {
             'take_down',
             'down',
             'restore',
-            'delete'
         ],
         'default': 'pending',
     },

@@ -90,7 +90,6 @@ def on_insert_sites_callback(items):
             app.logger.debug('Ready to create item\n{0}'.format(item))
 
 
-
 def on_inserted_sites_callback(items):
     """
     Provision Express instances.
@@ -107,7 +106,7 @@ def on_inserted_sites_callback(items):
             # Need to get the string out of the ObjectID.
             statistics_payload['site'] = str(item['_id'])
             app.logger.debug('Create Statistics item\n{0}'.format(statistics_payload))
-            statistics = utilities.post_eve(resource='statistics', payload= statistics_payload)
+            statistics = utilities.post_eve(resource='statistics', payload=statistics_payload)
             app.logger.debug(statistics)
             item['statistics'] = str(statistics['_id'])
             app.logger.debug('Ready to send to Celery\n{0}'.format(item))
@@ -141,14 +140,16 @@ def on_insert_code_callback(items):
         tasks.code_deploy.delay(item)
 
 
-def post_delete_site_callback(item):
+def pre_delete_sites_callback(request, lookup):
     """
     Remove site from servers right before the item is removed.
 
-    :param item:
+    :param request: flask.request object
+    :param lookup:
     """
-    app.logger.debug(item)
-    tasks.site_remove.delay(item)
+    app.logger.debug(lookup)
+    site = utilities.get_single_eve('sites', lookup['_id'])
+    tasks.site_remove.delay(site)
 
 
 def on_delete_item_code_callback(item):
@@ -191,11 +192,13 @@ def on_update_code_callback(updates, original):
     # Copy 'original' to a new dict, then update it with values from 'updates'
     # to create an item to deploy. Need to do the same process for meta first,
     # otherwise the update will fully overwrite.
-    meta = original['meta'].copy()
-    meta.update(updates['meta'])
+    if updates.get('meta'):
+        meta = original['meta'].copy()
+        meta.update(updates['meta'])
     updated_item = original.copy()
     updated_item.update(updates)
-    updated_item['meta'] = meta
+    if updates.get('meta'):
+        updated_item['meta'] = meta
 
     app.logger.debug('Ready to hand to Celery\n{0}\n{1}'.format(updated_item, original))
     tasks.code_update.delay(updated_item, original)
@@ -236,10 +239,6 @@ def on_update_sites_callback(updates, original):
 
                 updates['dates'] = json.loads(date_json)
 
-            elif updates['status'] == 'delete':
-                app.logger.debug('Ready to hand to Celery\n{0}'.format(item))
-                tasks.site_remove.delay(item)
-                return
         app.logger.debug('Ready to hand to Celery\n{0}'.format(item))
         tasks.site_update.delay(item, updates, original)
 
@@ -295,7 +294,7 @@ app.debug = True
 # Use DB hooks if you want to modify data on the way in.
 app.on_pre_POST += pre_post_callback
 app.on_pre_DELETE_code += pre_delete_code_callback
-app.on_post_DELETE_site += post_delete_site_callback
+app.on_pre_DELETE_sites += pre_delete_sites_callback
 app.on_insert_code += on_insert_code_callback
 app.on_insert_sites += on_insert_sites_callback
 app.on_inserted_sites += on_inserted_sites_callback
