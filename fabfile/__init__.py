@@ -535,7 +535,7 @@ def _remove_symlink(symlink):
 
 # TODO: Add decorator to run on a single host.
 def _create_database(site):
-    if environment != 'test':
+    if environment != 'local':
         os.environ['MYSQL_TEST_LOGIN_FILE'] = '/home/{0}/.mylogin.cnf'.format(
             ssh_user)
         mysql_login_path = "{0}_{1}".format(database_user, environment)
@@ -543,11 +543,11 @@ def _create_database(site):
         database_password = utilities.decrypt_string(site['db_key'])
         local('{0} \'CREATE DATABASE `{1}`;\''.format(mysql_info, site['sid']))
         # TODO: Make IP addresses config.
-        local("{0} \"CREATE USER '{1}'@'172.20.62.0/255.255.255.0' IDENTIFIED BY '{2}';\"".format(
+        local("{0} \"CREATE USER '{1}'@'192.168.33.0/255.255.255.0' IDENTIFIED BY '{2}';\"".format(
             mysql_info,
             site['sid'],
             database_password))
-        sql = "GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'172.20.62.0/255.255.255.0';".format(
+        sql = "GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'192.168.33.0/255.255.255.0';".format(
             site['sid'])
         local("{0} \"{1}\"".format(mysql_info, sql))
     else:
@@ -557,7 +557,7 @@ def _create_database(site):
 
 # TODO: Add decorator to run on a single host.
 def _delete_database(site):
-    if environment != 'test':
+    if environment != 'local':
         # TODO: Make file location config.
         os.environ['MYSQL_TEST_LOGIN_FILE'] = '/home/{0}/.mylogin.cnf'.format(
             ssh_user)
@@ -566,7 +566,7 @@ def _delete_database(site):
         database_password = utilities.decrypt_string(site['db_key'])
         local('{0} \'DROP DATABASE IF EXISTS `{1}`;\''.format(mysql_info, site['sid']))
         # TODO: Make IP addresses config.
-        local("{0} \"DROP USER '{1}'@'172.20.62.0/255.255.255.0';\"".format(
+        local("{0} \"DROP USER '{1}'@'192.168.33.0/255.255.255.0';\"".format(
             mysql_info,
             site['sid']))
     else:
