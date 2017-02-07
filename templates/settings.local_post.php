@@ -8,14 +8,14 @@ $conf['page_cache_maximum_age'] = {{page_cache_maximum_age}};
 // Define tmp directory
 $conf['file_temporary_path'] = '/wwwng/sitefiles/{{sid}}/tmp';
 
-{% if environment != 'test' %}
+{% if environment != 'local' %}
 $databases['default']['default'] = array(
   'driver' => 'mysql',
   'database' => '{{ sid }}',
   'username' => '{{ sid }}',
   'password' => '{{ pw }}',
   'host' => '{{ database_servers.master }}',
-  'port' => '3307',
+  'port' => '3306',
   'prefix' => '',
 );
 {% if database_servers.slaves %}
@@ -27,7 +27,7 @@ $databases['default']['slave'][] = array(
   'username' => '{{ sid }}',
   'password' => '{{ pw }}',
   'host' => '{{ slave }}',
-  'port' => '3307',
+  'port' => '3306',
   'prefix' => '',
 );
 {% endfor %}
@@ -39,7 +39,7 @@ $databases['default']['default'] = array(
   'username' => 'root',
   'password' => 'root',
   'host' => '{{ database_servers.master }}',
-  'port' => '3307',
+  'port' => '3306',
   'prefix' => '',
 );
 
