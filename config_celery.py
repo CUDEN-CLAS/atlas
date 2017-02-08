@@ -10,7 +10,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 }
 
 CELERY_TIMEZONE = 'MST'
-CELERY_ENABLE_UTC = True
+CELERY_ENABLE_UTC = False
 # Time in seconds
 CELERYD_TASK_TIME_LIMIT = 1200
 
@@ -35,7 +35,7 @@ CELERY_ROUTES = {
 CELERYBEAT_SCHEDULE = {
     'launched-cron': {
         'task': 'atlas.tasks.cron',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=60),
         'kwargs': {
             "status": "launched",
             "exclude_packages": ["cu_classes_bundle"]
