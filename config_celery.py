@@ -27,29 +27,33 @@ EMAIL_USE_TLS = email_use_tls
 EMAIL_HOST_USER = email_username
 EMAIL_HOST_PASSWORD = email_password
 
-
+# Setup routing so that we don't overwhelm the server wh.
 CELERY_ROUTES = {
-    'inventory.tasks.express_launched_cron': {'queue': 'expresscrons'},
+    'atlas.tasks.command_run': {'queue': 'command_queue'},
 }
 
 CELERYBEAT_SCHEDULE = {
-    'launched-cron': {
+    'launched_cron': {
         'task': 'atlas.tasks.cron',
         'schedule': timedelta(minutes=60),
         'kwargs': {
+            "type": "express",
             "status": "launched",
             "exclude_packages": ["cu_classes_bundle"]
         },
     },
-    'classes-cron': {
+    'classes_cron': {
         'task': 'atlas.tasks.cron',
-        'schedule': timedelta(minutes=60),
-        'kwargs': {"include_packages": ["cu_classes_bundle"]},
-    },
-    'installed-cron': {
-        'task': 'atlas.tasks.cron',
-        'schedule': timedelta(minutes=120),
+        'schedule': timedelta(hours=2),
         'kwargs': {
+            "include_packages": ["cu_classes_bundle"]
+        },
+    },
+    'installed_cron': {
+        'task': 'atlas.tasks.cron',
+        'schedule': timedelta(hours=3),
+        'kwargs': {
+            "type": "express",
             "status": "installed",
             "exclude_packages": ["cu_classes_bundle"]
         },

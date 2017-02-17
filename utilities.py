@@ -144,7 +144,7 @@ def post_eve(resource, payload):
         return r.text
 
 
-def get_eve(resource, query):
+def get_eve(resource, query=None):
     """
     Make calls to the Atlas API.
 
@@ -152,11 +152,13 @@ def get_eve(resource, query):
     :param query: argument string
     :return: dict of items that match the query string.
     """
-    url = "{0}/{1}?{2}".format(api_urls[environment], resource, query)
+    if query:
+        url = "{0}/{1}?{2}".format(api_urls[environment], resource, query)
+    else:
+        url = "{0}/{1}".format(api_urls[environment], resource)
     print(url)
     r = requests.get(url, auth=(service_account_username, service_account_password), verify=ssl_verification)
     if r.ok:
-        print(r.json())
         return r.json()
     else:
         return r.text
@@ -320,7 +322,9 @@ def post_to_slack(message, title, link='', attachment_text='', level='good', use
             ]
         }
         if environment == 'local':
-            payload['channel'] ='@{0}'.format(user)
+            payload['channel'] = '@{0}'.format(slack_username)
+        elif 'cron' in attachment_text:
+            payload['channel'] = 'cron'
 
         # We need 'json=payload' vs. 'payload' because arguments can be passed in
         # any order. Using json=payload instead of data=json.dumps(payload) so that
