@@ -305,12 +305,9 @@ def site_remove(site):
             utilities.delete_eve('statistics', site['statistics'])
         execute(fabfile.site_remove, site=site)
 
-<<<<<<< HEAD
     #execute(fabfile.update_f5)
-=======
-    if environment != 'local':
+    if environment != 'test':
         execute(fabfile.update_f5)
->>>>>>> upstream/master
 
     slack_title = '{0}/{1}'.format(base_urls[environment], site['path'])
     slack_message = 'Site Remove - Success'
