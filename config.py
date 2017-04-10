@@ -5,6 +5,10 @@ All variable settings should go here so values can be propagated to the various
  functions from a central location.
 """
 import re
+import os
+
+# Set Atlas location
+atlas_location = os.path.dirname(os.path.realpath(__file__))
 
 # Import config_servers.py.
 try:
@@ -41,3 +45,5 @@ if trailing_slash.search(sites_web_root):
 ssl_verification = False
 if environment == 'local':
     ssl_verification = False
+
+version_number = '1.0.8'
