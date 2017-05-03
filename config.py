@@ -42,7 +42,7 @@ if trailing_slash.search(sites_web_root):
 
 
 # This allows us to use a self signed cert for local dev.
-ssl_verification = False
+ssl_verification = "/etc/pki/tls/certs"
 if environment == 'local':
     ssl_verification = False
 
