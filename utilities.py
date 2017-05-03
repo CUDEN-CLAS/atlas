@@ -367,7 +367,7 @@ def post_to_slack(message, title, link='', attachment_text='', level='good', use
 
 def post_to_slack_payload(payload):
     """
-    Posts a message to a given channel using the Slack Incoming Webhooks API. 
+    Posts a message to a given channel using the Slack Incoming Webhooks API.
     See https://api.slack.com/docs/message-formatting.
 
     :param payload: Payload suitable for POSTing to Slack.
@@ -395,22 +395,23 @@ def post_to_logstash_payload(payload):
         if not r.ok:
             print r.text
 
-def send_email(message, subject, you):
+
+
+def send_email(message, subject, to):
     """
     Sends email
     :param message: content of the email to be sent.
     :param subject: content of the subject line
-    :param me: the user sending the email
-    :param you: list of email address(es) the email will be sent to
+    :param to: list of email address(es) the email will be sent to
     """
     # We only send plaintext to prevent abuse.
     msg = MIMEText(message, 'plain')
     msg['Subject'] = subject
     msg['From'] = send_from_email
-    msg['To'] = ", ".join(you)
+    msg['To'] = ", ".join(to)
 
     s = smtplib.SMTP(email_host, email_port)
     s.starttls()
     s.login(email_username, email_password)
-    s.sendmail(send_from_email, you, msg.as_string())
+    s.sendmail(send_from_email, to, msg.as_string())
     s.quit()
