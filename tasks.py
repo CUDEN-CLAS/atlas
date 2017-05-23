@@ -205,9 +205,9 @@ def site_provision(site):
             link=slack_link,
             attachment_text=attachment_text,
             level=slack_color)
-        logstash_payload = {'provision_time': provision_time,
-                            'logsource': 'atlas'}
-        utilities.post_to_logstash_payload(payload=logstash_payload)
+        #logstash_payload = {'provision_time': provision_time,
+                            #'logsource': 'atlas'}
+        #utilities.post_to_logstash_payload(payload=logstash_payload)
 
 
 @celery.task
@@ -337,8 +337,8 @@ def site_remove(site):
         execute(fabfile.site_remove, site=site)
 
     #execute(fabfile.update_f5)
-    if environment != 'test':
-        execute(fabfile.update_f5)
+    #if environment != 'test':
+        #execute(fabfile.update_f5)
 
     slack_title = '{0}/{1}'.format(base_urls[environment], site['path'])
     slack_message = 'Site Remove - Success'

@@ -282,11 +282,11 @@ def site_launch(site):
         print ('Site launch - No GSA')
         _launch_site(site=site)
 
-    if environment is not 'test':
-        print ('Diff f5')
-        _diff_f5()
-        print ('Update f5')
-        update_f5()
+    #if environment is not 'test':
+        #print ('Diff f5')
+        #_diff_f5()
+        #print ('Update f5')
+        #update_f5()
 
 
 @roles('webserver_single')
