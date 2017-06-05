@@ -610,24 +610,26 @@ def delete_stuck_pending_sites():
     """
     site_query = 'where={"status":"pending"}'
     sites = utilities.get_eve('sites', site_query)
-    # Loop through and remove sites that are more than 30 minutes old.
-    for site in sites['_items']:
-        # Parse date string into structured time.
-        # See https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior
-        # for mask format.
-        date_created = time.strptime(site['_created'], "%Y-%m-%d %H:%M:%S %Z")
-        # Get time now, Convert date_created to seconds from epoch and
-        # calculate the age of the site.
-        seconds_since_creation = time.time() - time.mktime(date_created)
-        logger.debug('{0} is {1} seconds old. Created: {2} Current: {3}'.format(
-            site['sid'],
-            seconds_since_creation,
-            time.mktime(date_created),
-            time.time())
-                    )
-        # 30 min * 60 sec = 1800 seconds
-        if seconds_since_creation > 1800:
-            utilities.delete_eve('sites', site['_id'])
+    logger.debug('Pending instances | %s', sites)
+    # Loop through and remove sites that are more than 15 minutes old.
+    if not sites['_meta']['total'] == 0:
+        for site in sites['_items']:
+            # Parse date string into structured time.
+            # See https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior
+            # for mask format.
+            date_created = time.strptime(site['_created'], "%Y-%m-%d %H:%M:%S %Z")
+            # Get time now, Convert date_created to seconds from epoch and
+            # calculate the age of the site.
+            seconds_since_creation = time.time() - time.mktime(date_created)
+            logger.debug('{0} is {1} seconds old. Created: {2} Current: {3}'.format(
+                site['sid'],
+                seconds_since_creation,
+                time.mktime(date_created),
+                time.time())
+                        )
+            # 15 min * 60 sec = 900 seconds
+            if seconds_since_creation > 900:
+                utilities.delete_eve('sites', site['_id'])
 
 
 @celery.task
@@ -637,7 +639,7 @@ def delete_all_available_sites():
     """
     site_query = 'where={"status":"available"}'
     sites = utilities.get_eve('sites', site_query)
-    logger.debug('Sites\n {0}'.format(sites))
+    logger.debug('Sites\n %s', sites)
     if not sites['_meta']['total'] == 0:
         for site in sites['_items']:
             logger.debug('Site\n {0}'.format(site))
@@ -645,7 +647,28 @@ def delete_all_available_sites():
 
 
 @celery.task
-def take_down_installed_35_day_old_sites():
+def delete_statistics_without_active_instance():
+    """
+    Get a list of statistics and key them against a list of active instances.
+    """
+    site_query = 'where={"type":"express","f5only":false}'
+    sites = utilities.get_eve('sites', site_query)
+    statistics = utilities.get_eve('statistics')
+    logger.debug('Statistics | %s', statistics)
+    logger.debug('Sites | %s', sites)
+    site_id_list = []
+    # Make as list of ids for easy checking.
+    if not statistics['_meta']['total'] == 0:
+        if not sites['_meta']['total'] == 0:
+            for site in sites['_items']:
+                site_id_list.append(site['_id'])
+        for statistic in statistics['_items']:
+            if statistic['site'] not in site_id_list:
+                utilities.delete_eve('statistics', statistic['_id'])
+
+
+@celery.task
+def take_down_installed_old_sites():
     if environment != 'production':
         site_query = 'where={"status":"installed"}'
         sites = utilities.get_eve('sites', site_query)
