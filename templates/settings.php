@@ -169,7 +169,7 @@ $conf['reverse_proxy_header'] = 'X-Forwarded-For';
 // Define Varnish Server Pool and version.
 $conf['varnish_control_terminal'] = '{{varnish_control}}';
 $conf['varnish_version'] = 4;
-{% if environment == 'test' %}
+{% if environment == 'production' %}
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
 {% endif %}
 

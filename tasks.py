@@ -589,7 +589,7 @@ def available_sites_check():
     site_query = 'where={"status":{"$in":["pending","available"]}}'
     sites = utilities.get_eve('sites', site_query)
     actual_site_count = sites['_meta']['total']
-    if environment == "test":
+    if environment == "production":
         desired_site_count = 2
     else:
         desired_site_count = 5
