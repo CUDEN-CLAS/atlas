@@ -535,7 +535,7 @@ def registry_rebuild(site):
 
 @roles('webservers')
 def clear_apc():
-    run("wget -q -O - http://clas-drup-prod01.ucdenver.pvt/sysadmintools/opcache/clear_opcache.php")
+    run("wget -q -O - http://localhost/sysadmintools/opcache/clear_opcache.php")
 
 
 def drush_cache_clear(sid):
