@@ -46,4 +46,4 @@ ssl_verification = "/etc/pki/tls/certs"
 if environment == 'local':
     ssl_verification = False
 
-version_number = '1.0.15'
+version_number = '1.0.17'
