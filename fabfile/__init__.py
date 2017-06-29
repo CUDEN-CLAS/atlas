@@ -624,11 +624,11 @@ def create_database(site):
         database_password = utilities.decrypt_string(site['db_key'])
         local('{0} \'CREATE DATABASE `{1}`;\''.format(mysql_info, site['sid']))
         # TODO: Make IP addresses config.
-        local("{0} \"CREATE USER '{1}'@'10.50.103.0/255.255.255.0' IDENTIFIED BY '{2}';\"".format(
+        local("{0} \"CREATE USER '{1}'@'192.168.33.0/255.255.255.0' IDENTIFIED BY '{2}';\"".format(
             mysql_info,
             site['sid'],
             database_password))
-        sql = "GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'10.50.103.0/255.255.255.0';".format(
+        sql = "GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'192.168.33.0/255.255.255.0';".format(
             site['sid'])
         local("{0} \"{1}\"".format(mysql_info, sql))
     else:
@@ -647,7 +647,7 @@ def delete_database(site):
         database_password = utilities.decrypt_string(site['db_key'])
         local('{0} \'DROP DATABASE IF EXISTS `{1}`;\''.format(mysql_info, site['sid']))
         # TODO: Make IP addresses config.
-        local("{0} \"DROP USER '{1}'@'10.50.103.0/255.255.255.0';\"".format(
+        local("{0} \"DROP USER '{1}'@'192.168.33.0/255.255.255.0';\"".format(
             mysql_info,
             site['sid']))
     else:
