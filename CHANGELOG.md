@@ -1,12 +1,34 @@
 # Change log
 
-## v1.1.0
+## v1.0.17
 
-This release requires a MongoDB command to migrate from Site to Instance
+Resolves:
 
-```shell
-db.sites.renameCollection("instance")
-```
+- &#35;266 - Allow More Headers In Requests
+- &#35;271 - Add user count to statistics
+- &#35;270 - Add status to statistics
+- &#35;273 - Clean up temp files
+- &#35;268 - Statistic objects for stuck 'pending' instances are not cleaning up
+- &#35;265 - Verify statistics objects are getting updated
+- &#35;251 - Stuck pending instances not being removed
+- &#35;269 - Capture all bundles as typed or other
+- &#35;282 - Provision often fails, but the instance ends up 'available'. Settings files or DB creation fails. Switched to Fabric templating. Wrapped fabric commands in exception catching.
+
+## v1.0.16
+
+Resolves:
+
+- Instances are being marked as 'available' without databases.
+
+## v1.0.15
+
+Resolves:
+
+- &#35;245 - Available instances are not replaced each night
+- &#35;262 - Automatically clean up stats items that have deleted sites.
+- &#35;259 - Need to accept variable_livechat_license_number
+- &#35;256 - Code clone need labels
+- &#35;251 - Math for age of a pending instance is wrong
 
 ## v1.0.14
 
