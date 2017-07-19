@@ -156,12 +156,6 @@ def site_provision(site):
     profile_name = profile['meta']['name']
 
     try:
-        result_create_database = execute(create_database, site=site)
-    except FabricException:
-        print 'Database creation failed.'
-        return result_create_database
-
-    try:
         result_create_dir_structure = execute(
             create_directory_structure, folder=code_directory)
     except FabricException:
@@ -522,7 +516,8 @@ def update_database(site):
 @roles('webserver_single')
 def registry_rebuild(site):
     """
-    Run a drush rr
+    Run a drush rr and drush cc drush. 
+    Drush command cache clear is a workaround, see #306.
 
     :param site: Site to run command on
     :return:
@@ -530,7 +525,7 @@ def registry_rebuild(site):
     print('Drush registry rebuild\n{0}'.format(site))
     code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     with cd(code_directory_sid):
-        run("drush rr")
+        run("drush rr; drush cc drush")
 
 
 @roles('webservers')
@@ -710,7 +705,7 @@ def create_settings_files(site):
                     use_jinja=True,
                     template_dir=template_dir,
                     backup=False,
-                    mode='0664')
+                    mode='0644')
 
     settings_variables = {
         'profile':profile_name,
@@ -729,7 +724,7 @@ def create_settings_files(site):
                     use_jinja=True,
                     template_dir=template_dir,
                     backup=False,
-                    mode='0664')
+                    mode='0644')
 
     local_post_settings_variables = {
         'sid':sid,
@@ -748,14 +743,14 @@ def create_settings_files(site):
                     use_jinja=True,
                     template_dir=template_dir,
                     backup=False,
-                    mode='0664')
+                    mode='0644')
 
 
 @runs_once
 def install_site(profile_name, code_directory_current):
     with cd(code_directory_current):
         run('drush site-install -y {0}'.format(profile_name))
-        run('drush rr')
+        run('drush rr; drush cc drush')
 
 
 def clone_repo(git_url, checkout_item, destination):
