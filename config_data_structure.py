@@ -103,26 +103,60 @@ code_schema = {
     },
 }
 
+query_schema = {
+    'title': {
+        'type': 'string',
+        'required' : True,
+    },
+    'description': {
+        'type': 'string',
+    },
+    'endpoint': {
+        'type': 'list',
+        'allowed': ["code", "site", "statistic"],
+        'required': True,
+    },
+    # An embedded 'strongly-typed' dictionary.
+    'query': {
+        'type': 'string',
+        'unique': True,
+    },
+    'tags': {
+        'type': 'list',
+        'schema': {
+            'type': 'string',
+        }
+    },
+    'rank': {
+        'type': 'integer',
+    },
+    'created_by': {
+        'type': 'string',
+    },
+    'modified_by': {
+        'type': 'string',
+    },
+}
 
 # Site schema.
 sites_schema = {
     'path': {
-      'type': 'string',
-      'unique': True,
+        'type': 'string',
+        'unique': True,
     },
     'db_key': {
-      'type': 'string',
+        'type': 'string',
     },
     'sid': {
-      'type': 'string',
-      'minlength': 9,
-      'maxlength': 14,
-      'unique': True,
+        'type': 'string',
+        'minlength': 9,
+        'maxlength': 14,
+        'unique': True,
     },
     'type': {
-      'type': 'string',
-      'allowed':  ['custom', 'express', 'legacy', 'homepage'],
-      'default': 'express',
+        'type': 'string',
+        'allowed':  ['express', 'legacy', 'homepage'],
+        'default': 'express',
     },
     'status': {
         'type': 'string',
@@ -133,6 +167,7 @@ sites_schema = {
             'installed',
             'launching',
             'launched',
+            'locked',
             'take_down',
             'down',
             'restore',
@@ -152,7 +187,6 @@ sites_schema = {
         'type': 'string',
         'allowed': [
             'poolb-express',
-            'poola-custom',
             'poolb-homepage',
             'WWWLegacy'],
         'default': 'poolb-express',
@@ -173,7 +207,7 @@ sites_schema = {
         'schema': {
             'page_cache_maximum_age': {
                 'type': 'integer',
-                'default': 300,
+                'default': 3600,
             },
             'siteimprove_site': {
                 'type': 'integer',
@@ -229,6 +263,9 @@ sites_schema = {
                 'type': 'datetime',
             },
             'launched': {
+                'type': 'datetime',
+            },
+            'locked': {
                 'type': 'datetime',
             },
             'taken_down': {
@@ -420,18 +457,20 @@ statistics_schema = {
             'email_address': {
                 'type': 'dict',
                 'schema': {
-                    'all': {
+                    'content_editor': {
                         'type': 'list',
+                        'nullable': True,
                     },
                     'site_contact': {
                         'type': 'list',
+                        'nullable': True,
                     },
                 },
             },
             'username': {
                 'type': 'dict',
                 'schema': {
-                    'all': {
+                    'content_editor': {
                         'type': 'list',
                     },
                     'site_contact': {
@@ -626,6 +665,15 @@ code = {
     'schema': code_schema,
 }
 
+# Query resource
+query = {
+    'item_title': 'query',
+    'public_methods': ['GET'],
+    'public_item_methods': ['GET'],
+    'versioning': True,
+    'schema': query_schema,
+}
+
 # Sites resource
 sites = {
     'item_title': 'site',
@@ -670,5 +718,6 @@ DOMAIN = {
     'sites': sites,
     'code': code,
     'commands': commands,
+    'query': query,
     'statistics': statistics,
 }

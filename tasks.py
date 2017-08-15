@@ -30,10 +30,6 @@ celery = Celery('tasks')
 celery.config_from_object(config_celery)
 
 
-class CeleryException(Exception):
-    pass
-
-
 @celery.task
 def code_deploy(item):
     """
@@ -167,7 +163,7 @@ def site_provision(site):
     :param site: A single site.
     :return:
     """
-    logger.debug('Site provision - {0}'.format(site))
+    logger.debug('Site provision | %s', site)
     start_time = time.time()
     # 'db_key' needs to be added here and not in Eve so that the encryption
     # works properly.
@@ -176,21 +172,32 @@ def site_provision(site):
     site['status'] = 'available'
 
     try:
+        logger.debug('Site provision | Create database')
+        utilities.create_database(site['sid'], site['db_key'])
+    except:
+        logger.error('Site provision failed | Database creation failed')
+        raise
+
+    try:
         provision_task = execute(fabfile.site_provision, site=site)
-        if isinstance(provision_task.get('host_string', None), BaseException):
-            raise provision_task.get('host_string')
-    except CeleryException as e:
-        logger.info('Site provision failed | Error Message | %s', e.message)
+    except:
+        logger.error('Site provision failed | Error Message | %s', provision_task)
+        raise
 
     logger.debug('Site provision | Provision Fabric task | %s', provision_task)
     logger.debug('Site provision | Provision Fabric task values | %s', provision_task.values)
 
     try:
+        result_correct_file_dir_permissions = execute(fabfile.correct_file_directory_permissions, site=site)
+    except:
+        logger.error('Site provision failed | Error Message | %s', result_correct_file_dir_permissions)
+        raise
+
+    try:
         install_task = execute(fabfile.site_install, site=site)
-        if isinstance(install_task.get('host_string', None), BaseException):
-            raise install_task.get('host_string')
-    except CeleryException as e:
-        logger.info('Site install failed | Error Message | %s', e.message)
+    except:
+        logger.error('Site install failed | Error Message | %s', install_task)
+        raise
 
     logger.debug('Site provision | Install Fabric task | %s', install_task)
     logger.debug('Site provision | Install Fabric task values | %s', install_task.values)
@@ -278,7 +285,7 @@ def site_update(site, updates, original):
 
     if updates.get('status'):
         logger.debug('Found status change.')
-        if updates['status'] in ['installing', 'launching', 'take_down', 'restore']:
+        if updates['status'] in ['installing', 'launching', 'locked', 'take_down', 'restore']:
             if updates['status'] == 'installing':
                 logger.debug('Status changed to installing')
                 # Set new status on site record for update to settings files.
@@ -295,6 +302,9 @@ def site_update(site, updates, original):
                     execute(fabfile.diff_f5)
                     execute(fabfile.update_f5)
                 # Let fabric send patch since it is changing update group.
+            elif updates['status'] == 'locked':
+                logger.debug('Status changed to locked')
+                execute(fabfile.update_settings_file, site=site)
             elif updates['status'] == 'take_down':
                 logger.debug('Status changed to take_down')
                 site['status'] = 'down'
@@ -314,11 +324,13 @@ def site_update(site, updates, original):
                 patch = utilities.patch_eve('sites', site['_id'], patch_payload)
                 logger.debug(patch)
 
+    # Don't update settings files a second time if status is changing to 'locked'.
     if updates.get('settings'):
-        logger.debug('Found settings change.')
-        if updates['settings'].get('page_cache_maximum_age') != original['settings'].get('page_cache_maximum_age'):
-            logger.debug('Found page_cache_maximum_age change.')
-        execute(fabfile.update_settings_file, site=site)
+        if not updates.get('status') or updates['status'] != 'locked':
+            logger.debug('Found settings change.')
+            if updates['settings'].get('page_cache_maximum_age') != original['settings'].get('page_cache_maximum_age'):
+                logger.debug('Found page_cache_maximum_age change.')
+            execute(fabfile.update_settings_file, site=site)
 
     slack_title = '{0}/{1}'.format(base_urls[environment], site['path'])
     slack_link = '{0}/{1}'.format(base_urls[environment], site['path'])
@@ -355,6 +367,14 @@ def site_remove(site):
         if not statistics['_meta']['total'] == 0:
             for statistic in statistics['_items']:
                 utilities.delete_eve('statistics', statistic['_id'])
+
+        try:
+            logger.debug('Site remove | Delete database')
+            utilities.delete_database(site['sid'])
+        except:
+            logger.error('Site remove failed | Database remove failed')
+            raise
+
         execute(fabfile.site_remove, site=site)
 
     #execute(fabfile.update_f5)
@@ -381,7 +401,7 @@ def command_prepare(item):
     """
     logger.debug('Prepare Command\n{0}'.format(item))
     if item['command'] == 'clear_apc':
-        execute(fabfile.clear_apc())
+        execute(fabfile.clear_apc)
         return
     if item['command'] == 'import_code':
         utilities.import_code(item['query'])
@@ -490,7 +510,7 @@ def cron(type=None, status=None, include_packages=None, exclude_packages=None):
         site_query_string.append('"status":"{0}",'.format(status))
     else:
         logger.debug('Cron - No status found')
-        site_query_string.append('"status":{"$in":["installed","launched"]},')
+        site_query_string.append('"status":{"$in":["installed","launched","locked"]},')
     if include_packages:
         logger.debug('Cron - found include_packages')
         for package_name in include_packages:

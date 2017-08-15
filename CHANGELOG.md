@@ -1,5 +1,48 @@
 # Change log
 
+## v1.0.22
+
+Need to
+
+- Add variable (`database_password`) to `config_local.py`. See `config_local.py.example`.
+- Add variable (`database.port`) to `config_servers.py`. See `config_servers.py.example`.
+- Update python packages.
+
+Resolves:
+
+- &#35;282 - Provision often fails, but the instance ends up 'available'
+- &#35;317 - Switch to mysql-python connecter
+- &#35;326 - Make SO and CE user lists nullable
+
+## v1.0.21
+
+Resolves:
+
+- &#35;325 - Remove poola-custom
+- &#35;315 - Settings files - Conditional for DEV
+- &#35;319 - Adding query endpoint
+
+## v1.0.02
+
+Resolves:
+
+- &#35;313 - Fix clear APC command
+- &#35;309 - Switch to content editor
+
+## v1.0.19
+
+Resolves:
+
+- &#35;306 - Add `drush cc drush` to registry rebuilds
+
+## v1.0.18
+
+Resolves:
+
+- &#35;272 - Add 'locked' status
+- Unbind LDAP
+- &#35;282 - Continue to try a squash this bug
+
 ## v1.0.17
 
 Resolves:
