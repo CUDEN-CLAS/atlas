@@ -47,7 +47,7 @@ def code_deploy(item):
     """
     # Need warn only to allow the error to pass to celery.
     with settings(warn_only=True):
-        print('Code - Deploy\n{0}'.format(item))
+        print 'Code - Deploy\n{0}'.format(item)
         if item['meta']['code_type'] == 'library':
             code_type_dir = 'libraries'
         else:
@@ -59,9 +59,9 @@ def code_deploy(item):
             item['meta']['version'])
         create_directory_structure(code_folder)
         clone_task = clone_repo(item["git_url"], item["commit_hash"], code_folder)
-        print('Got clone response')
-        print(clone_task)
-        if clone_task == True:
+        print 'Got clone response'
+        print clone_task
+        if clone_task is True:
             if item['meta']['is_current']:
                 code_folder_current = '{0}/{1}/{2}/{2}-current'.format(
                     code_root,
@@ -216,15 +216,7 @@ def site_provision(site):
         print 'Update symlink failed.'
         return result_update_symlink_web
 
-    try:
-        result_correct_file_dir_permissions = execute(
-            correct_file_directory_permissions, site=site)
-    except FabricException:
-        print 'Correct file permissions failed.'
-        return result_correct_file_dir_permissions
 
-
-@roles('webserver_single')
 def site_install(site):
     code_directory = '{0}/{1}'.format(sites_code_root, site['sid'])
     code_directory_current = '{0}/current'.format(code_directory)
@@ -425,8 +417,6 @@ def site_remove(site):
         site['type'],
         site['path'])
 
-    delete_database(site)
-
     remove_symlink(web_directory)
     remove_symlink(web_directory_path)
 
@@ -437,7 +427,7 @@ def site_remove(site):
 
     remove_directory(code_directory)
 
-
+@roles('webservers')
 def correct_file_directory_permissions(site):
     code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     web_directory_sid = '{0}/{1}/{2}'.format(sites_web_root, site['type'], site['sid'])
@@ -489,7 +479,7 @@ def command_run(site, command):
     :param command: Command to run
     :return:
     """
-    print('Command - {0}\n{1}'.format(site['sid'], command))
+    print 'Command - {0}\n{1}'.format(site['sid'], command)
     web_directory = '{0}/{1}/{2}'.format(
         sites_web_root,
         site['type'],
@@ -506,26 +496,26 @@ def update_database(site):
     :param site: Site to run command on
     :return:
     """
-    print('Database Update\n{0}'.format(site))
+    print 'Database Update\n{0}'.format(site)
     code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     with cd(code_directory_sid):
-        print('Running database updates.')
-        run("drush updb -y")
+        print 'Running database updates.'
+        run('drush updb -y')
 
 
 @roles('webserver_single')
 def registry_rebuild(site):
     """
-    Run a drush rr and drush cc drush. 
+    Run a drush rr and drush cc drush.
     Drush command cache clear is a workaround, see #306.
 
     :param site: Site to run command on
     :return:
     """
-    print('Drush registry rebuild\n{0}'.format(site))
+    print 'Drush registry rebuild\n{0}'.format(site)
     code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     with cd(code_directory_sid):
-        run("drush rr; drush cc drush")
+        run('drush rr; drush cc drush;')
 
 
 @roles('webservers')
@@ -536,12 +526,12 @@ def clear_apc():
 def drush_cache_clear(sid):
     code_directory_current = '{0}/{1}/current'.format(sites_code_root, sid)
     with cd(code_directory_current):
-        run("drush cc all")
+        run('drush cc all')
 
 
 @roles('webservers')
 def rewrite_symlinks(site):
-    print('Rewrite symlinks\n{0}'.format(site))
+    print 'Rewrite symlinks | {0}'.format(site)
     code_directory_current = '{0}/{1}/current'.format(sites_code_root, site['sid'])
     web_directory = '{0}/{1}/{2}'.format(sites_web_root, site['type'], site['sid'])
     if site['pool'] != 'poolb-homepage':
@@ -606,48 +596,6 @@ def remove_directory(folder):
 def remove_symlink(symlink):
     print('Remove symlink\n{0}'.format(symlink))
     run('rm -f {0}'.format(symlink))
-
-
-@runs_once
-def create_database(site):
-    print 'Site Provision - {0} - Create DB'.format(site['_id'])
-    if environment != 'local':
-        os.environ['MYSQL_TEST_LOGIN_FILE'] = '/home/{0}/.mylogin.cnf'.format(
-            ssh_user)
-        mysql_login_path = "{0}_{1}".format(database_user, environment)
-        mysql_info = '{0} --login-path={1} -e'.format(mysql_path, mysql_login_path)
-        database_password = utilities.decrypt_string(site['db_key'])
-        local('{0} \'CREATE DATABASE `{1}`;\''.format(mysql_info, site['sid']))
-        # TODO: Make IP addresses config.
-        local("{0} \"CREATE USER '{1}'@'10.50.103.0/255.255.255.0' IDENTIFIED BY '{2}';\"".format(
-            mysql_info,
-            site['sid'],
-            database_password))
-        sql = "GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'10.50.103.0/255.255.255.0';".format(
-            site['sid'])
-        local("{0} \"{1}\"".format(mysql_info, sql))
-    else:
-        with settings(host_string='clas-testlocal.ucdenver.pvt'):
-            run("mysql -e 'create database `{}`;'".format(site['sid']))
-
-
-@runs_once
-def delete_database(site):
-    if environment != 'local':
-        # TODO: Make file location config.
-        os.environ['MYSQL_TEST_LOGIN_FILE'] = '/home/{0}/.mylogin.cnf'.format(
-            ssh_user)
-        mysql_login_path = "{0}_{1}".format(database_user, environment)
-        mysql_info = '{0} --login-path={1} -e'.format(mysql_path, mysql_login_path)
-        database_password = utilities.decrypt_string(site['db_key'])
-        local('{0} \'DROP DATABASE IF EXISTS `{1}`;\''.format(mysql_info, site['sid']))
-        # TODO: Make IP addresses config.
-        local("{0} \"DROP USER '{1}'@'10.50.103.0/255.255.255.0';\"".format(
-            mysql_info,
-            site['sid']))
-    else:
-        with settings(host_string='clas-testlocal.ucdenver.pvt'):
-            run("mysql -e 'DROP DATABASE IF EXISTS `{}`;'".format(site['sid']))
 
 
 def create_settings_files(site):
@@ -746,7 +694,7 @@ def create_settings_files(site):
                     mode='0644')
 
 
-@runs_once
+@roles('webserver_single')
 def install_site(profile_name, code_directory_current):
     with cd(code_directory_current):
         run('drush site-install -y {0}'.format(profile_name))
