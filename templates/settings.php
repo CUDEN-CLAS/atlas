@@ -17,10 +17,10 @@ if (file_exists($local_pre_settings)) {
 
 if (isset($launched) && $launched && isset($conf["cu_path"])) {
   if (isset($_SERVER['WWWNG_ENV'])) {
-    if ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.edu' &&
+    if ($_SERVER['HTTP_HOST'] == 'clas.ucdenver.edu' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
-      header('Location: http://clas-test.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      header('Location: https://clas.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
     elseif ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
@@ -54,7 +54,7 @@ $conf['page_compression'] = 0;
 if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
   // Ensure secure pages is enabled.
-  $conf['securepages_enable'] = TRUE;
+  //$conf['securepages_enable'] = TRUE;
 
   // Never allow updating modules through UI.
   $conf['allow_authorize_operations'] = FALSE;
@@ -74,12 +74,12 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
   // Memcache and Varnish Backends.
   $conf['cache_backends'] = array(
-    'profiles/{{profile}}/modules/contrib/varnish/varnish.cache.inc',
-    'profiles/{{profile}}/modules/contrib/memcache/memcache.inc',
+    'profiles/express/modules/contrib/varnish/varnish.cache.inc',
+    'profiles/express/modules/contrib/memcache/memcache.inc',
   );
 
   // Memcache lock file location.
-  $conf['lock_inc'] = 'profiles/{{profile}}/modules/contrib/memcache/memcache-lock.inc';
+  $conf['lock_inc'] = 'profiles/express/modules/contrib/memcache/memcache-lock.inc';
 
   // Setup cache_form bin.
   $conf['cache_class_cache_form'] = 'DrupalDatabaseCache';
@@ -114,6 +114,9 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
     if (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') {
       $base_url = 'https://';
     }
+    elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+      $base_url = 'https://';
+    }
     else {
       $base_url = 'http://';
     }
@@ -128,7 +131,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
       case 'cust_test':
         $conf['environment_indicator_text'] = 'TEST';
         $conf['environment_indicator_color'] = 'yellow';
-        $base_url .= 'clas-test.ucdenver.pvt';
+        $base_url .= 'clas.ucdenver.edu';
         break;
 
       case 'cust_prod':
@@ -152,30 +155,28 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
 // Memcache
 $conf['memcache_key_prefix'] = $conf['cu_sid'];
-{% if environment != 'local' %}
+
 $conf['memcache_servers'] = array(
-  {% for ip in memcache_servers -%}
-  '{{ip}}' => 'default',
-  {% endfor %}
+  'localhost:11211' => 'default',
+  
 );
-{% endif %}
+
 
 
 // Varnish
 $conf['reverse_proxy'] = TRUE;
-$conf['reverse_proxy_addresses'] = array({% for ip in reverse_proxies -%}'{{ip}}',{% endfor %});
+$conf['reverse_proxy_addresses'] = array('clas-varnish.ucdenver.pvt',);
 // Drupal will look for IP in $_SERVER['X-Forwarded-For']
 $conf['reverse_proxy_header'] = 'X-Forwarded-For';
-// Define Varnish Server Pool and version.
-$conf['varnish_control_terminal'] = '{{varnish_control}}';
-$conf['varnish_version'] = 4;
-{% if environment == 'test' %}
-  $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
-{% endif %}
 
-{% if environment == 'development' %}
-  $conf['drupal_http_request_fails'] = FALSE;
-{% endif %}
+// Define Varnish Server Pool and version.
+$conf['varnish_control_terminal'] = 'clas-varnish.ucdenver.pvt:6082';
+$conf['varnish_version'] = 4;
+
+  $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
+
+
+
 
 // Google Analytics
 $conf['googleanalytics_account'] = 'UA-25752450-1';
@@ -185,9 +186,7 @@ $conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
 $conf['cu_class_import_api_password'] = "YEF9BYQSfFr8UXNmDvM5";
 $conf['cu_class_import_institutions'] = array('B-CUBLD' => 'B-CUBLD');
 
-{% if environment == 'local' %}
-$conf['error_level'] = 2;
-{% endif %}
+
 
 /**
  * Include a post local settings file if it exists.
