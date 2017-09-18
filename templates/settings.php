@@ -131,7 +131,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
       case 'cust_test':
         $conf['environment_indicator_text'] = 'TEST';
         $conf['environment_indicator_color'] = 'yellow';
-        $base_url .= 'clas.ucdenver.edu';
+        $base_url .= 'clas-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
@@ -179,7 +179,7 @@ $conf['varnish_version'] = 4;
 
 
 // Google Analytics
-$conf['googleanalytics_account'] = 'UA-25752450-1';
+$conf['googleanalytics_account'] = 'UA-733655-8';
 
 // cu_classes_bundle API variables.
 $conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
