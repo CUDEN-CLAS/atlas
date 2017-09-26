@@ -17,16 +17,16 @@ if (file_exists($local_pre_settings)) {
 
 if (isset($launched) && $launched && isset($conf["cu_path"])) {
   if (isset($_SERVER['WWWNG_ENV'])) {
-    if ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.edu' &&
+    if ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
       header('Location: http://clas-test.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
-    elseif ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
+    elseif ($_SERVER['HTTP_HOST'] == 'clas.ucdenver.edu' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
-      header('Location: http://clas-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      header('Location: http://clas.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
     elseif ($_SERVER['HTTP_HOST'] == 'www-dev.colorado.edu' &&
@@ -134,7 +134,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
       case 'cust_prod':
         $conf['environment_indicator_text'] = 'PRODUCTION';
         $conf['environment_indicator_color'] = 'red';
-        $base_url .= 'clas-test.ucdenver.edu';
+        $base_url .= 'clas.ucdenver.edu';
         break;
 
       case 'express_local':
@@ -178,7 +178,7 @@ $conf['varnish_version'] = 4;
 {% endif %}
 
 // Google Analytics
-$conf['googleanalytics_account'] = 'UA-25752450-1';
+$conf['googleanalytics_account'] = 'UA-733655-8';
 
 // cu_classes_bundle API variables.
 $conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
