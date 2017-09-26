@@ -178,7 +178,7 @@ $conf['varnish_version'] = 4;
 {% endif %}
 
 // Google Analytics
-$conf['googleanalytics_account'] = 'UA-25752450-1';
+$conf['googleanalytics_account'] = 'UA-733655-8';
 
 // cu_classes_bundle API variables.
 $conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
