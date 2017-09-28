@@ -190,11 +190,15 @@ def site_provision(site):
     if nfs_mount_files_dir:
         nfs_dir = nfs_mount_location[environment]
         nfs_files_dir = '{0}/sitefiles/{1}/files'.format(nfs_dir, site['sid'])
+        nfs_site_dir = '{0}/sitefiles/{1}'.format(nfs_dir, site['sid'])
         try:
             execute(create_nfs_files_dir, nfs_dir=nfs_dir, site_sid=site['sid'])
         except FabricException as error:
             print 'Create nfs directory failed.'
             return error
+        # Needed to change owner to apache on files folder
+        with cd(nfs_site_dir):
+            run('sudo chown {0} files'.format(webserver_user))
         # Replace default files dir with this one
         site_files_dir = code_directory_current + '/sites/default/files'
         try:
@@ -414,7 +418,7 @@ def site_remove(site):
     if nfs_mount_files_dir:
         nfs_dir = nfs_mount_location[environment]
         nfs_files_dir = '{0}/sitefiles/{1}'.format(nfs_dir, site['sid'])
-        remove_directory(nfs_files_dir)
+        sudo_remove_directory(nfs_files_dir)
 
     remove_directory(code_directory)
 
@@ -562,6 +566,10 @@ def create_directory_structure(folder):
 def remove_directory(folder):
     print('Remove directory\n{0}'.format(folder))
     run('rm -rf {0}'.format(folder))
+    
+def sudo_remove_directory(folder):
+    print('Sudo Remove directory\n{0}'.format(folder))
+    run('sudo rm -rf {0}'.format(folder))
 
 
 def remove_symlink(symlink):

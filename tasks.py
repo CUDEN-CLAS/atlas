@@ -552,12 +552,12 @@ def command_run(site, command, single_server, user=None):
 
     logger.debug('Command result - {0}'.format(fabric_task_result))
     command_time = time.time() - start_time
-    logstash_payload = {'command_time': command_time,
-                        'logsource': 'atlas',
-                        'command': command,
-                        'instance': site['sid']
-                        }
-    utilities.post_to_logstash_payload(payload=logstash_payload)
+    #logstash_payload = {'command_time': command_time,
+                        #'logsource': 'atlas',
+                        #'command': command,
+                        #'instance': site['sid']
+                        #}
+    #utilities.post_to_logstash_payload(payload=logstash_payload)
 
     slack_title = '{0}/{1}'.format(base_urls[environment], site['path'])
     slack_link = '{0}/{1}'.format(base_urls[environment], site['path'])
@@ -653,12 +653,12 @@ def cron_run(site):
 
     logger.info('Run Cron | %s | Cron success', site['sid'])
     command_time = time.time() - start_time
-    logstash_payload = {'command_time': command_time,
-                        'logsource': 'atlas',
-                        'command': command,
-                        'instance': site['sid']
-                        }
-    utilities.post_to_logstash_payload(payload=logstash_payload)
+    #logstash_payload = {'command_time': command_time,
+                        #'logsource': 'atlas',
+                        #'command': command,
+                        #'instance': site['sid']
+                        #}
+    #utilities.post_to_logstash_payload(payload=logstash_payload)
 
 
 @celery.task
