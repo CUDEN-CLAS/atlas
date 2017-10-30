@@ -420,7 +420,7 @@ def site_remove(site):
         nfs_files_dir = '{0}/sitefiles/{1}'.format(nfs_dir, site['sid'])
         sudo_remove_directory(nfs_files_dir)
 
-    remove_directory(code_directory)
+    sudo_remove_directory(code_directory)
 
 
 @roles('webserver_single')
@@ -446,7 +446,7 @@ def command_run_single(site, command, warn_only=False):
 
 
 @roles('webservers')
-def command_run(site, command):
+def command_run(site, command, warn_only=True):
     """
     Run a command on a all webservers.
 
@@ -459,8 +459,9 @@ def command_run(site, command):
         sites_web_root,
         site['type'],
         site['sid'])
-    with cd(web_directory):
-        run('{0}'.format(command))
+    with settings(warn_only=warn_only):
+        with cd(web_directory):
+             run('{0}'.format(command))
 
 
 @roles('webserver_single')
