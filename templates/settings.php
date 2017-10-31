@@ -143,24 +143,13 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
 // Memcache
 $conf['memcache_key_prefix'] = $conf['cu_sid'];
-
-if (isset($_SERVER['WWWNG_ENV'])) {
-
-  switch($_SERVER['WWWNG_ENV']) {
-  	 case 'cust_test':
-  	   $conf['memcache_servers'] = array(
-      'memcache.ucdenver.pvt:11211' => 'default',
-
-      );
-      break;
-  	 case 'cust_prod':
-  	   $conf['memcache_servers'] = array(
-      'clas-cache01.ucdenver.pvt:11211' => 'default',
-
-      );
-      break;
-  }
-}
+{% if environment != 'local' %}
+$conf['memcache_servers'] = array(
+  {% for ip in memcache_servers -%}
+  '{{ip}}' => 'default',
+  {% endfor %}
+);
+{% endif %}
 
 
 // Varnish
