@@ -165,15 +165,15 @@ if (isset($_SERVER['WWWNG_ENV'])) {
 
 // Varnish
 $conf['reverse_proxy'] = TRUE;
-$conf['reverse_proxy_addresses'] = array('clas-varnish.ucdenver.pvt',);
+$conf['reverse_proxy_addresses'] = array({% for ip in reverse_proxies -%}'{{ip}}',{% endfor %});
 // Drupal will look for IP in $_SERVER['X-Forwarded-For']
 $conf['reverse_proxy_header'] = 'X-Forwarded-For';
-
 // Define Varnish Server Pool and version.
-$conf['varnish_control_terminal'] = 'clas-varnish.ucdenver.pvt:6082';
+$conf['varnish_control_terminal'] = '{{varnish_control}}';
 $conf['varnish_version'] = 4;
-
+{% if environment == 'production' %}
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
+{% endif %}
 
 
 
