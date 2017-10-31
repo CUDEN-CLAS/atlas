@@ -266,13 +266,13 @@ def site_provision(site):
         raise
 
     try:
-        execute(fabfile.site_provision, site=site)
+        provision_task = execute(fabfile.site_provision, site=site)
     except Exception as error:
         logger.error('Site provision failed | Error Message | %s', error)
         raise
 
     try:
-        execute(fabfile.site_install, site=site)
+        provision_task = execute(fabfile.site_install, site=site)
     except Exception as error:
         logger.error('Site install failed | Error Message | %s', error)
         raise
@@ -552,12 +552,12 @@ def command_run(site, command, single_server, user=None):
 
     logger.debug('Command result - {0}'.format(fabric_task_result))
     command_time = time.time() - start_time
-    logstash_payload = {'command_time': command_time,
-                        'logsource': 'atlas',
-                        'command': command,
-                        'instance': site['sid']
-                        }
-    utilities.post_to_logstash_payload(payload=logstash_payload)
+    #logstash_payload = {'command_time': command_time,
+                        #'logsource': 'atlas',
+                        #'command': command,
+                        #'instance': site['sid']
+                        #}
+    #utilities.post_to_logstash_payload(payload=logstash_payload)
 
     slack_title = '{0}/{1}'.format(base_urls[environment], site['path'])
     slack_link = '{0}/{1}'.format(base_urls[environment], site['path'])
@@ -653,12 +653,12 @@ def cron_run(site):
 
     logger.info('Run Cron | %s | Cron success', site['sid'])
     command_time = time.time() - start_time
-    logstash_payload = {'command_time': command_time,
-                        'logsource': 'atlas',
-                        'command': command,
-                        'instance': site['sid']
-                        }
-    utilities.post_to_logstash_payload(payload=logstash_payload)
+    #logstash_payload = {'command_time': command_time,
+                        #'logsource': 'atlas',
+                        #'command': command,
+                        #'instance': site['sid']
+                        #}
+    #utilities.post_to_logstash_payload(payload=logstash_payload)
 
 
 @celery.task
@@ -666,7 +666,7 @@ def available_sites_check():
     site_query = 'where={"status":{"$in":["pending","available"]}}'
     sites = utilities.get_eve('sites', site_query)
     actual_site_count = sites['_meta']['total']
-    if environment == "production":
+    if environment == "test":
         desired_site_count = 2
     else:
         desired_site_count = 5
