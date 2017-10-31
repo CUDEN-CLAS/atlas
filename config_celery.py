@@ -14,9 +14,10 @@ CELERY_ENABLE_UTC = False
 # Time in seconds
 CELERYD_TASK_TIME_LIMIT = 1200
 
-# Setup routing so that we don't overwhelm the server wh.
+# Setup routing to isolate routine cron from other commands..
 CELERY_ROUTES = {
     'atlas.tasks.command_run': {'queue': 'command_queue'},
+    'atlas.tasks.cron_run': {'queue': 'cron_queue'},
 }
 
 CELERYBEAT_SCHEDULE = {
@@ -26,7 +27,6 @@ CELERYBEAT_SCHEDULE = {
         'kwargs': {
             "type": "express",
             "status": "launched",
-            "exclude_packages": ["cu_classes_bundle"]
         },
     },
     'locked_cron': {
@@ -35,14 +35,6 @@ CELERYBEAT_SCHEDULE = {
         'kwargs': {
             "type": "express",
             "status": "locked",
-            "exclude_packages": ["cu_classes_bundle"]
-        },
-    },
-    'classes_cron': {
-        'task': 'atlas.tasks.cron',
-        'schedule': timedelta(hours=2),
-        'kwargs': {
-            "include_packages": ["cu_classes_bundle"]
         },
     },
     'installed_cron': {
@@ -51,7 +43,6 @@ CELERYBEAT_SCHEDULE = {
         'kwargs': {
             "type": "express",
             "status": "installed",
-            "exclude_packages": ["cu_classes_bundle"]
         },
     },
     'available_sites_check': {

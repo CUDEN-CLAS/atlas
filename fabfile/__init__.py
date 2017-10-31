@@ -156,65 +156,64 @@ def site_provision(site):
     profile_name = profile['meta']['name']
 
     try:
-        result_create_dir_structure = execute(
-            create_directory_structure, folder=code_directory)
-    except FabricException:
+        execute(create_directory_structure, folder=code_directory)
+    except FabricException as error:
         print 'Create directory structure failed.'
-        return result_create_dir_structure
+        return error
 
     try:
-        result_create_dir_structure_web = execute(
-            create_directory_structure, folder=web_directory_type)
-    except FabricException:
+        execute(create_directory_structure, folder=web_directory_type)
+    except FabricException as error:
         print 'Create directory structure failed.'
-        return result_create_dir_structure_web
+        return error
 
     with cd(code_directory):
         core = utilities.get_code_name_version(site['code']['core'])
         run('drush dslm-new {0} {1}'.format(site['sid'], core))
-
-    try:
-        result_update_symlink = execute(
-            update_symlink, source=code_directory_sid, destination=code_directory_current)
-    except FabricException:
-        print 'Update symlink failed.'
-        return result_update_symlink
-
-    with cd(code_directory_current):
+        # Find all directories and set perms to 0755.
+        run('find {0} -type d -exec chmod 0755 {{}} \\;'.format(code_directory_sid))
+        # Find all directories and set group to `webserver_user_group`.
+        run('find {0} -type d -exec chgrp {1} {{}} \\;'.format(code_directory_sid, webserver_user_group))
+        # Find all files and set perms to 0644.
+        run('find {0} -type f -exec chmod 0644 {{}} \\;'.format(code_directory_sid))
+        
+    with cd(code_directory_sid):
         profile = utilities.get_code_name_version(site['code']['profile'])
         run('drush dslm-add-profile {0}'.format(profile))
+
+    try:
+        execute(update_symlink, source=code_directory_sid, destination=code_directory_current)
+    except FabricException as error:
+        print 'Update symlink failed.'
+        return error
 
     if nfs_mount_files_dir:
         nfs_dir = nfs_mount_location[environment]
         nfs_files_dir = '{0}/sitefiles/{1}/files'.format(nfs_dir, site['sid'])
         try:
-            result_create_nfs_files_dir = execute(
-                create_nfs_files_dir, nfs_dir=nfs_dir, site_sid=site['sid'])
-        except FabricException:
+            execute(create_nfs_files_dir, nfs_dir=nfs_dir, site_sid=site['sid'])
+        except FabricException as error:
             print 'Create nfs directory failed.'
-            return result_create_nfs_files_dir
+            return error
         # Replace default files dir with this one
         site_files_dir = code_directory_current + '/sites/default/files'
         try:
-            result_replace_files_directory = execute(
-                replace_files_directory, source=nfs_files_dir, destination=site_files_dir)
-        except FabricException:
+            execute(replace_files_directory, source=nfs_files_dir, destination=site_files_dir)
+        except FabricException as error:
             print 'Replace file directory failed.'
-            return result_replace_files_directory
+            return error
 
     try:
-        result_create_settings_files = execute(
-            create_settings_files, site=site)
-    except FabricException:
+        execute(create_settings_files, site=site)
+    except FabricException as error:
         print 'Settings file creation failed.'
-        return result_create_settings_files
+        return error
 
     try:
-        result_update_symlink_web = execute(
-            update_symlink, source=code_directory_current, destination=web_directory_sid)
-    except FabricException:
+        execute(update_symlink, source=code_directory_current, destination=web_directory_sid)
+    except FabricException as error:
         print 'Update symlink failed.'
-        return result_update_symlink_web
+        return error
 
 
 def site_install(site):
@@ -224,18 +223,10 @@ def site_install(site):
     profile_name = profile['meta']['name']
 
     try:
-        result_install_site = execute(
-            install_site, profile_name=profile_name, code_directory_current=code_directory_current)
-    except FabricException:
+        execute(install_site, profile_name=profile_name, code_directory_current=code_directory_current)
+    except FabricException as error:
         print 'Instance install failed.'
-        return result_install_site
-
-    try:
-        result_correct_file_dir_permissions = execute(
-            correct_file_directory_permissions, site=site)
-    except FabricException:
-        print 'Correct file permissions failed.'
-        return result_correct_file_dir_permissions
+        return error
 
 
 @roles('webservers')
@@ -361,7 +352,7 @@ def site_backup(site):
     # Start the actual process.
     create_directory_structure(backup_path)
     with cd(web_directory):
-        run('drush sql-dump --result-file={0}'.format(database_result_file_path))
+        run('sudo -u {0} drush sql-dump --result-file={1}'.format(webserver_user, database_result_file_path))
         run('tar -czf {0} {1}'.format(files_result_file_path, nfs_files_dir))
 
 
@@ -391,7 +382,7 @@ def site_restore(site):
     update_symlink(code_directory_sid, code_directory_current)
     with cd(code_directory_current):
         # Run updates
-        action_0 = run("drush vset inactive_30_email FALSE; drush vset inactive_55_email FALSE; drush vset inactive_60_email FALSE;")
+        action_0 = run("sudo -u {0} drush vset inactive_30_email FALSE; sudo -u {0} drush vset inactive_55_email FALSE; sudo -u {0} drush vset inactive_60_email FALSE;".format(webserver_user))
         # TODO: See if this works as intended.
         if action_0.failed:
             return task
@@ -426,26 +417,6 @@ def site_remove(site):
         remove_directory(nfs_files_dir)
 
     remove_directory(code_directory)
-
-@roles('webservers')
-def correct_file_directory_permissions(site):
-    code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
-    web_directory_sid = '{0}/{1}/{2}'.format(sites_web_root, site['type'], site['sid'])
-    nfs_dir = nfs_mount_location[environment]
-    nfs_files_dir = '{0}/sitefiles/{1}/files'.format(nfs_dir, site['sid'])
-    nfs_files_tmp_dir = '{0}/sitefiles/{1}/tmp'.format(nfs_dir, site['sid'])
-    with cd(code_directory_sid):
-        run('chgrp -R {0} sites/default'.format(ssh_user_group))
-        run('chmod -R 0775 sites/default')
-    with cd(nfs_files_dir):
-        run('chgrp -R {0} {1}'.format(webserver_user_group, nfs_files_dir))
-        run('chmod -R 0775 {0}'.format(nfs_files_dir))
-    with cd(nfs_files_tmp_dir):
-        run('chgrp -R {0} {1}'.format(webserver_user_group, nfs_files_tmp_dir))
-        run('chmod -R 0775 {0}'.format(nfs_files_tmp_dir))
-    with cd(web_directory_sid):
-        run('chmod -R 0775 sites/default')
-        run('chmod -R 0644 sites/default/*.php')
 
 
 @roles('webserver_single')
@@ -500,7 +471,7 @@ def update_database(site):
     code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     with cd(code_directory_sid):
         print 'Running database updates.'
-        run('drush updb -y')
+        run('sudo -u {0} drush updb -y'.format(webserver_user))
 
 
 @roles('webserver_single')
@@ -515,7 +486,7 @@ def registry_rebuild(site):
     print 'Drush registry rebuild\n{0}'.format(site)
     code_directory_sid = '{0}/{1}/{1}'.format(sites_code_root, site['sid'])
     with cd(code_directory_sid):
-        run('drush rr; drush cc drush;')
+        run('sudo -u {0} drush rr; sudo -u {0} drush cc drush;'.format(webserver_user))
 
 
 @roles('webservers')
@@ -526,7 +497,7 @@ def clear_apc():
 def drush_cache_clear(sid):
     code_directory_current = '{0}/{1}/current'.format(sites_code_root, sid)
     with cd(code_directory_current):
-        run('drush cc all')
+        run('sudo -u {0} drush cc all'.format(webserver_user))
 
 
 @roles('webservers')
@@ -548,10 +519,10 @@ def rewrite_symlinks(site):
 def update_settings_file(site):
     print('Update Settings Files - {0}'.format(site))
     try:
-        result_create_settings_files = execute(create_settings_files, site=site)
-    except FabricException:
+        execute(create_settings_files, site=site)
+    except FabricException as e:
         print 'Settings files creation failed.'
-        return result_create_settings_files
+        return e
 
 
 @roles('webservers')
@@ -599,11 +570,15 @@ def remove_symlink(symlink):
 
 
 def create_settings_files(site):
+    """
+    Create settings.local_pre.php, settings.php, and settings.local_post.php from templates and and
+    upload the resulting file to the webservers.
+    """
     sid = site['sid']
     if 'path' in site:
-        path = site['path']
+        site_path = site['path']
     else:
-        path = site['sid']
+        site_path = site['sid']
     # If the site is launching or launched, we add 'cu_path' and redirect the
     # p1 URL.
     status = site['status']
@@ -624,6 +599,11 @@ def create_settings_files(site):
     profile = utilities.get_single_eve('code', site['code']['profile'])
     profile_name = profile['meta']['name']
 
+    if ('cse_creator' in site['settings']) and ('cse_id' in site['settings']) :
+        google_cse_csx = site['settings']['cse_creator'] + ':' + site['settings']['cse_id']
+    else:
+        google_cse_csx = None
+
     template_dir = '{0}/templates'.format(atlas_location)
 
     print template_dir
@@ -637,12 +617,13 @@ def create_settings_files(site):
         'atlas_url':atlas_url,
         'atlas_username':service_account_username,
         'atlas_password':service_account_password,
-        'path':path,
+        'path':site_path,
         'status':status,
         'pool':site['pool'],
         'atlas_statistics_id':statistics,
         'siteimprove_site':siteimprove_site,
-        'siteimprove_group':siteimprove_group
+        'siteimprove_group':siteimprove_group,
+        'google_cse_csx': google_cse_csx
     }
 
     print 'Settings Pre Variables - {0}'.format(local_pre_settings_variables)
@@ -678,9 +659,9 @@ def create_settings_files(site):
         'sid':sid,
         'pw':database_password,
         'page_cache_maximum_age':page_cache_maximum_age,
-        'database_servers':env.roledefs['database_servers'],
-        'memcache_servers':env.roledefs['memcache_servers'],
-        'environment':environment if environment != 'prod' else ''
+        'database_servers': env.roledefs['database_servers'],
+        'memcache_servers': env.roledefs['memcache_servers'],
+        'environment':environment
     }
 
     print 'Settings Post Variables - {0}'.format(local_post_settings_variables)
@@ -697,8 +678,8 @@ def create_settings_files(site):
 @roles('webserver_single')
 def install_site(profile_name, code_directory_current):
     with cd(code_directory_current):
-        run('drush site-install -y {0}'.format(profile_name))
-        run('drush rr; drush cc drush')
+        run('sudo -u {0} drush site-install -y {1}'.format(webserver_user, profile_name))
+        run('sudo -u {0} drush rr; sudo -u {0} drush cc drush'.format(webserver_user))
 
 
 def clone_repo(git_url, checkout_item, destination):
@@ -760,7 +741,7 @@ def machine_readable(string):
 def create_gsa(site):
     machine_name = machine_readable(site['path'])
     if not gsa_collection_exists(machine_name):
-        index_path = "http://www.colorado.edu/{0}/".format(site['path'])
+        index_path = "https://www.colorado.edu/{0}/".format(site['path'])
         gsa_create_collection(machine_name, index_path)
 
 
@@ -898,7 +879,7 @@ def launch_site(site, gsa_collection=False):
                     clear_apc()
                     if gsa_collection:
                         # Set the collection name
-                        run("drush vset --yes google_appliance_collection {0}".format(gsa_collection))
+                        run("sudo -u {0} drush vset --yes google_appliance_collection {1}".format(webserver_user, gsa_collection))
                     # Clear caches at the end of the launch process to show
                     # correct pathologic rendered URLS.
                     drush_cache_clear(site['sid'])
