@@ -152,14 +152,14 @@ def create_database(site_sid, site_db_key):
     instance_database_password = decrypt_string(site_db_key)
     # Add user
     try:
-        cursor.execute("CREATE USER '{0}'@'10.50.103.0/255.255.255.0' IDENTIFIED BY '{1}';".format(site_sid, instance_database_password))
+        cursor.execute("CREATE USER '{0}'@'192.168.33.0/255.255.255.0' IDENTIFIED BY '{1}';".format(site_sid, instance_database_password))
     except mariadb.Error as error:
         print 'Create User Error: {0}'.format(error)
         raise
 
     # Grant privileges
     try:
-        cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'10.50.103.0/255.255.255.0';".format(site_sid))
+        cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'192.168.33.0/255.255.255.0';".format(site_sid))
     except mariadb.Error as error:
         print 'Grant Privileges Error: {0}'.format(error)
         raise
@@ -195,7 +195,7 @@ def delete_database(site_sid):
 
     # Drop user
     try:
-        cursor.execute("DROP USER '{0}'@'10.50.103.0/255.255.255.0';".format(site_sid))
+        cursor.execute("DROP USER '{0}'@'192.168.33.0/255.255.255.0';".format(site_sid))
     except mariadb.Error as error:
         print 'Drop User Error: {0}'.format(error)
 
