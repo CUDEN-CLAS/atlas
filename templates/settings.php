@@ -49,6 +49,12 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
       header('Location: https://biz-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
+    elseif ($_SERVER['HTTP_HOST'] == 'biz.ucdenver.edu' &&
+      strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
+      header('HTTP/1.0 301 Moved Permanently');
+      header('Location: https://biz.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      exit();
+    }
   }
 }
 
