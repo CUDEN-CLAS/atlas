@@ -71,7 +71,9 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
   // Memcache and Varnish Backends.
   $conf['cache_backends'] = array(
+{% if environment != 'local' %}
     'profiles/{{profile}}/modules/contrib/varnish/varnish.cache.inc',
+{% endif %}
     'profiles/{{profile}}/modules/contrib/memcache/memcache.inc',
   );
 
@@ -81,8 +83,10 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
   // Setup cache_form bin.
   $conf['cache_class_cache_form'] = 'DrupalDatabaseCache';
 
+{% if environment != 'local' %}
   // Set varnish as the page cache.
   $conf['cache_class_cache_page'] = 'VarnishCache';
+{% endif %}
 
   // Set memcache as default.
   $conf['cache_default_class'] = 'MemCacheDrupal';
@@ -102,35 +106,24 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
   // No IP blocking from the UI, we'll take care of that at a higher level.
   $conf['blocked_ips'] = array();
 
-  // Enable the environment indicator.
-  $conf['environment_indicator_enabled'] = TRUE;
-
   // Change colors and text for environment indicator based on ENV var.
   if (isset($_SERVER['WWWNG_ENV'])) {
     global $base_url;
 
     switch($_SERVER['WWWNG_ENV']) {
       case 'cust_dev':
-        $conf['environment_indicator_text'] = 'DEV';
-        $conf['environment_indicator_color'] = 'green';
         $base_url .= 'https://www-dev.colorado.edu';
         break;
 
       case 'cust_test':
-        $conf['environment_indicator_text'] = 'TEST';
-        $conf['environment_indicator_color'] = 'yellow';
         $base_url .= 'https://www-test.colorado.edu';
         break;
 
       case 'cust_prod':
-        $conf['environment_indicator_text'] = 'PRODUCTION';
-        $conf['environment_indicator_color'] = 'red';
         $base_url .= 'https://www.colorado.edu';
         break;
 
       case 'express_local':
-        $conf['environment_indicator_text'] = 'LOCAL';
-        $conf['environment_indicator_color'] = 'grey';
         $base_url .= 'https://express.local';
         break;
 
@@ -143,15 +136,13 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
 // Memcache
 $conf['memcache_key_prefix'] = $conf['cu_sid'];
-{% if environment != 'local' %}
 $conf['memcache_servers'] = array(
   {% for ip in memcache_servers -%}
   '{{ip}}' => 'default',
   {% endfor %}
 );
-{% endif %}
 
-
+{% if environment != 'local' %}
 // Varnish
 $conf['reverse_proxy'] = TRUE;
 $conf['reverse_proxy_addresses'] = array({% for ip in reverse_proxies -%}'{{ip}}',{% endfor %});
@@ -164,17 +155,11 @@ $conf['varnish_version'] = 4;
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
 {% endif %}
 
-{% if environment == 'development' %}
-  $conf['drupal_http_request_fails'] = FALSE;
+{% if environment in ['local','dev'] %}
+$conf['drupal_http_request_fails'] = FALSE;
 {% endif %}
-
 // Google Analytics
 $conf['googleanalytics_account'] = 'UA-25752450-1';
-
-// cu_classes_bundle API variables.
-$conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
-$conf['cu_class_import_api_password'] = "YEF9BYQSfFr8UXNmDvM5";
-$conf['cu_class_import_institutions'] = array('B-CUBLD' => 'B-CUBLD');
 
 {% if environment == 'local' %}
 $conf['error_level'] = 2;

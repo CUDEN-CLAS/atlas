@@ -22,7 +22,8 @@ PAGINATION_DEFAULT = 500
 
 # Add support for CORS
 X_DOMAINS = '*'
-X_HEADERS = ['Access-Control-Allow-Origin', 'If-Match', 'Authorization', 'User-Agent', 'Content-Type']
+X_HEADERS = ['Access-Control-Allow-Origin', 'If-Match',
+             'Authorization', 'User-Agent', 'Content-Type']
 
 # Allow $regex filtering. Default config blocks where and regex.
 MONGO_QUERY_BLACKLIST = ['$where']
@@ -40,7 +41,7 @@ ENFORCE_IF_MATCH = True
 
 # Code schema. Defines a code asset that can be applied to a site.
 # We nest in 'meta' to allow us to check for a unique combo
-code_schema = {
+CODE_SCHEMA = {
     'meta': {
         'type': 'dict',
         'unique': True,
@@ -72,17 +73,26 @@ code_schema = {
             'tag': {
                 'type': 'list',
             },
-            'dependency': {
-                'type': 'list',
-                'schema': {
-                    'type': 'objectid',
-                    'data_relation': {
-                        'resource': 'code',
-                        'field': '_id',
-                        'embeddable': True,
-                    },
-                }
-            }
+        },
+    },
+    'deploy': {
+        'type': 'dict',
+        'schema': {
+            'registry_rebuild': {
+                'type': 'boolean',
+                'default': False,
+                'required': True,
+            },
+            'cache_clear': {
+                'type': 'boolean',
+                'default': True,
+                'required': True,
+            },
+            'update_database': {
+                'type': 'boolean',
+                'default': True,
+                'required': True,
+            },
         },
     },
     'git_url': {
@@ -103,10 +113,10 @@ code_schema = {
     },
 }
 
-query_schema = {
+QUERY_SCHEMA = {
     'title': {
         'type': 'string',
-        'required' : True,
+        'required': True,
     },
     'description': {
         'type': 'string',
@@ -116,7 +126,6 @@ query_schema = {
         'allowed': ["code", "site", "statistic"],
         'required': True,
     },
-    # An embedded 'strongly-typed' dictionary.
     'query': {
         'type': 'string',
         'unique': True,
@@ -139,7 +148,7 @@ query_schema = {
 }
 
 # Site schema.
-sites_schema = {
+SITES_SCHEMA = {
     'path': {
         'type': 'string',
         'unique': True,
@@ -178,9 +187,9 @@ sites_schema = {
         'type': 'string',
         'allowed': [
             'local',
-            'development',
+            'dev',
             'test',
-            'production'
+            'prod'
         ],
     },
     'pool': {
@@ -195,10 +204,6 @@ sites_schema = {
         'type': 'integer',
     },
     'f5only': {
-        'type': 'boolean',
-        'default': False
-    },
-    'import_from_inventory': {
         'type': 'boolean',
         'default': False
     },
@@ -261,7 +266,7 @@ sites_schema = {
     'dates': {
         'type': 'dict',
         'schema': {
-            # See https://docs.python.org/2/library/datetime.html#datetime.datetime for datetime format.
+            # See https://docs.python.org/2/library/datetime.html#datetime.datetime for format.
             'created': {
                 'type': 'datetime',
             },
@@ -276,6 +281,7 @@ sites_schema = {
             },
             'taken_down': {
                 'type': 'datetime',
+                'nullable': True,
             },
         },
     },
@@ -296,7 +302,7 @@ sites_schema = {
     },
 }
 
-statistics_schema = {
+STATISTICS_SCHEMA = {
     'site': {
         'type': 'objectid',
         'data_relation': {
@@ -309,163 +315,201 @@ statistics_schema = {
     'name': {
         'type': 'string',
         'minlength': 1,
+        'nullable': True,
     },
     'status': {
         'type': 'string',
         'minlength': 1,
+        'nullable': True,
     },
     'nodes_total': {
         'type': 'integer',
+        'nullable': True,
+    },
+    'node_revision_total': {
+        'type': 'integer',
+        'nullable': True,
     },
     'nodes_by_type': {
         'type': 'dict',
+        'nullable': True,
         'schema': {
-            'page': {'type': 'integer'},
-            'file': {'type': 'integer'},
-            'faqs': {'type': 'integer'},
-            'content_list_page': {'type': 'integer'},
-            'webform': {'type': 'integer'},
-            'article': {'type': 'integer'},
-            'article_list_page': {'type': 'integer'},
-            'person': {'type': 'integer'},
-            'person_list_page': {'type': 'integer'},
-            'photo_gallery': {'type': 'integer'},
+            'page': {'type': 'integer', 'nullable': True},
+            'file': {'type': 'integer', 'nullable': True},
+            'faqs': {'type': 'integer', 'nullable': True},
+            'content_list_page': {'type': 'integer', 'nullable': True},
+            'webform': {'type': 'integer', 'nullable': True},
+            'article': {'type': 'integer', 'nullable': True},
+            'article_list_page': {'type': 'integer', 'nullable': True},
+            'person': {'type': 'integer', 'nullable': True},
+            'person_list_page': {'type': 'integer', 'nullable': True},
+            'photo_gallery': {'type': 'integer', 'nullable': True},
         },
     },
     'nodes_other': {
         'type': 'string',
+        'nullable': True,
     },
     'days_since_last_edit': {
         'type': 'integer',
+        'nullable': True,
     },
     'days_since_last_login': {
         'type': 'integer',
+        'nullable': True,
     },
     'beans_total': {
         'type': 'integer',
+        'nullable': True,
     },
     'beans_by_type': {
         'type': 'dict',
+        'nullable': True,
         'schema': {
-            'hero_unit': {'type': 'integer'},
-            'slider': {'type': 'integer'},
-            'block': {'type': 'integer'},
-            'content_list': {'type': 'integer'},
-            'feature_callout': {'type': 'integer'},
-            'quicktab': {'type': 'integer'},
-            'video_reveal': {'type': 'integer'},
-            'block_row': {'type': 'integer'},
-            'block_section': {'type': 'integer'},
-            'cu_events_calendar_block': {'type': 'integer'},
-            'events_calendar_grid': {'type': 'integer'},
-            'rss': {'type': 'integer'},
-            'articles': {'type': 'integer'},
-            'article_feature': {'type': 'integer'},
-            'article_grid': {'type': 'integer'},
-            'article_slider': {'type': 'integer'},
-            'people_list_block': {'type': 'integer'},
-            'social_links': {'type': 'integer'},
-            'facebook_activity': {'type': 'integer'},
-            'facebook_like_button': {'type': 'integer'},
-            'twitter_block': {'type': 'integer'},
+            'hero_unit': {'type': 'integer', 'nullable': True},
+            'slider': {'type': 'integer', 'nullable': True},
+            'block': {'type': 'integer', 'nullable': True},
+            'content_list': {'type': 'integer', 'nullable': True},
+            'feature_callout': {'type': 'integer', 'nullable': True},
+            'quicktab': {'type': 'integer', 'nullable': True},
+            'video_reveal': {'type': 'integer', 'nullable': True},
+            'block_row': {'type': 'integer', 'nullable': True},
+            'block_section': {'type': 'integer', 'nullable': True},
+            'cu_events_calendar_block': {'type': 'integer', 'nullable': True},
+            'events_calendar_grid': {'type': 'integer', 'nullable': True},
+            'rss': {'type': 'integer', 'nullable': True},
+            'articles': {'type': 'integer', 'nullable': True},
+            'article_feature': {'type': 'integer', 'nullable': True},
+            'article_grid': {'type': 'integer', 'nullable': True},
+            'article_slider': {'type': 'integer', 'nullable': True},
+            'people_list_block': {'type': 'integer', 'nullable': True},
+            'social_links': {'type': 'integer', 'nullable': True},
+            'facebook_activity': {'type': 'integer', 'nullable': True},
+            'facebook_like_button': {'type': 'integer', 'nullable': True},
+            'twitter_block': {'type': 'integer', 'nullable': True},
         },
     },
     'beans_other': {
         'type': 'string',
+        'nullable': True,
     },
     'context': {
         'type': 'dict',
+        'nullable': True,
         'schema': {
             'condition': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
-                    'context': {'type': 'integer'},
-                    'context_all': {'type': 'integer'},
-                    'default': {'type': 'integer'},
-                    'layout': {'type': 'integer'},
-                    'menu': {'type': 'integer'},
-                    'node': {'type': 'integer'},
-                    'node_taxonomy': {'type': 'integer'},
-                    'path': {'type': 'integer'},
-                    'query_param': {'type': 'integer'},
-                    'query_string': {'type': 'integer'},
-                    'sitewide': {'type': 'integer'},
-                    'sitewide_public': {'type': 'integer'},
-                    'taxonomy_term': {'type': 'integer'},
-                    'user': {'type': 'integer'},
-                    'user_page': {'type': 'integer'},
-                    'views': {'type': 'integer'},
+                    'context': {'type': 'integer', 'nullable': True},
+                    'context_all': {'type': 'integer', 'nullable': True},
+                    'default': {'type': 'integer', 'nullable': True},
+                    'layout': {'type': 'integer', 'nullable': True},
+                    'menu': {'type': 'integer', 'nullable': True},
+                    'node': {'type': 'integer', 'nullable': True},
+                    'node_taxonomy': {'type': 'integer', 'nullable': True},
+                    'path': {'type': 'integer', 'nullable': True},
+                    'query_param': {'type': 'integer', 'nullable': True},
+                    'query_string': {'type': 'integer', 'nullable': True},
+                    'sitewide': {'type': 'integer', 'nullable': True},
+                    'sitewide_public': {'type': 'integer', 'nullable': True},
+                    'taxonomy_term': {'type': 'integer', 'nullable': True},
+                    'user': {'type': 'integer', 'nullable': True},
+                    'user_page': {'type': 'integer', 'nullable': True},
+                    'views': {'type': 'integer', 'nullable': True},
                 },
             },
             'reaction': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
-                    'backstretch': {'type': 'integer'},
-                    'block': {'type': 'integer'},
-                    'breadcrumb': {'type': 'integer'},
-                    'column_override': {'type': 'integer'},
-                    'cu_share': {'type': 'integer'},
-                    'menu': {'type': 'integer'},
-                    'region': {'type': 'integer'},
-                    'template_suggestions': {'type': 'integer'},
-                    'theme': {'type': 'integer'},
-                    'theme_html': {'type': 'integer'},
-                    'title_image': {'type': 'integer'},
+                    'backstretch': {'type': 'integer', 'nullable': True},
+                    'block': {'type': 'integer', 'nullable': True},
+                    'breadcrumb': {'type': 'integer', 'nullable': True},
+                    'column_override': {'type': 'integer', 'nullable': True},
+                    'cu_share': {'type': 'integer', 'nullable': True},
+                    'menu': {'type': 'integer', 'nullable': True},
+                    'region': {'type': 'integer', 'nullable': True},
+                    'template_suggestions': {'type': 'integer', 'nullable': True},
+                    'theme': {'type': 'integer', 'nullable': True},
+                    'theme_html': {'type': 'integer', 'nullable': True},
+                    'title_image': {'type': 'integer', 'nullable': True},
                 },
             },
         },
     },
     'context_other_conditions': {
         'type': 'string',
+        'nullable': True,
     },
     'context_other_reactions': {
         'type': 'string',
+        'nullable': True,
     },
     'variable_cron_last': {
         'type': 'integer',
+        'nullable': True,
     },
     'variable_site_403': {
         'type': 'string',
+        'nullable': True,
     },
     'variable_site_404': {
         'type': 'string',
+        'nullable': True,
     },
     'variable_theme_default': {
         'type': 'string',
+        'nullable': True,
     },
     'variable_ga_account': {
         'type': 'string',
+        'nullable': True,
     },
     'variable_livechat_license_number': {
         'type': 'string',
+        'nullable': True,
     },
     'profile_module_manager': {
         'type': 'string',
+        'nullable': True,
     },
     'express_code_version': {
         'type': 'string',
+        'nullable': True,
     },
     'express_core_schema_version': {
         'type': 'integer',
+        'nullable': True,
     },
     'theme_is_responsive': {
         'type': 'boolean',
+        'nullable': True,
     },
     'overridden_features': {
         'type': 'dict',
+        'nullable': True,
     },
     'drupal_system_status': {
         'type': 'boolean',
+        'nullable': True,
     },
     'custom_logo_settings': {
         'type': 'boolean',
+        'nullable': True,
     },
     'users': {
         'type': 'dict',
+        'nullable': True,
         'schema': {
             'email_address': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
+                    'edit_my_content': {
+                        'type': 'list',
+                        'nullable': True,
+                    },
                     'content_editor': {
                         'type': 'list',
                         'nullable': True,
@@ -478,160 +522,216 @@ statistics_schema = {
             },
             'username': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
+                    'edit_my_content': {
+                        'type': 'list',
+                        'nullable': True,
+                    },
                     'content_editor': {
                         'type': 'list',
+                        'nullable': True,
                     },
                     'site_contact': {
                         'type': 'list',
+                        'nullable': True,
                     },
                 },
             },
             'no_valid_owner': {
                 'type': 'boolean',
+                'nullable': True,
             },
-            'count': {
-                'type': 'integer',
+            'counts': {
+                'type': 'dict',
+                'nullable': True,
+                'schema': {
+                    'edit_my_content': {
+                        'type': 'integer',
+                        'nullable': True,
+                    },
+                    'content_editor': {
+                        'type': 'integer',
+                        'nullable': True,
+                    },
+                    'site_contact': {
+                        'type': 'integer',
+                        'nullable': True,
+                    },
+                },
             },
         },
     },
     'bundles': {
         'type': 'dict',
+        'nullable': True,
         'schema': {
             'cu_advanced_content_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_advanced_design_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_advanced_layout_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_events_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_feeds_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_forms_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_news_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_people_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_photo_gallery_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_seo_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_social_media_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_seo_admin_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_test_content_admin_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'cu_debug_admin_bundle': {
                 'type': 'dict',
+                'nullable': True,
                 'schema': {
                     'schema_version': {
                         'type': 'integer',
+                        'nullable': True,
                     },
                 },
             },
             'other': {
                 'type': 'string',
+                'nullable': True,
             },
         },
     },
     'webforms': {
         'type': 'dict',
+        'nullable': True,
         'schema': {
-            'total_submissions': {'type': 'integer'},
-            'active_forms': {'type': 'integer'},
-            'inactive_forms': {'type': 'integer'},
+            'total_submissions': {'type': 'integer', 'nullable': True},
+            'active_forms': {'type': 'integer', 'nullable': True},
+            'inactive_forms': {'type': 'integer', 'nullable': True},
         },
     },
     'created_by': {
         'type': 'string',
+        'nullable': True,
     },
     'modified_by': {
         'type': 'string',
+        'nullable': True,
     },
 }
 
-commands_schema = {
+COMMANDS_SCHEMA = {
     'name': {
         'type': 'string',
         'minlength': 3,
@@ -665,26 +765,26 @@ Definitions of Resources.
 Tells Eve what methods and schemas apply to a given resource.
 """
 # Code resource
-code = {
+CODE = {
     'item_title': 'code',
     'public_methods': ['GET'],
     'public_item_methods': ['GET'],
     'versioning': True,
     'soft_delete': True,
-    'schema': code_schema,
+    'schema': CODE_SCHEMA,
 }
 
 # Query resource
-query = {
+QUERY = {
     'item_title': 'query',
     'public_methods': ['GET'],
     'public_item_methods': ['GET'],
     'versioning': True,
-    'schema': query_schema,
+    'schema': QUERY_SCHEMA,
 }
 
 # Sites resource
-sites = {
+SITES = {
     'item_title': 'site',
     # Allow lookup by 'sid' in addition to '_id'
     'additional_lookup': {
@@ -695,38 +795,35 @@ sites = {
     'public_item_methods': ['GET'],
     'versioning': True,
     'soft_delete': True,
-    'schema': sites_schema,
+    'schema': SITES_SCHEMA,
 }
 
 # Statistics resource
-statistics = {
+STATISTICS = {
     'item_title': 'statistics',
     'public_methods': ['GET'],
     'public_item_methods': ['GET'],
     'versioning': True,
     'soft_delete': True,
-    'schema': statistics_schema,
+    'schema': STATISTICS_SCHEMA,
 }
 
 # Command resource
-# Empty public_item_methods means that you can't call actual commands without
-# authentication. Anonymous users can list the commands, but not call them.
-commands = {
+# Empty public_item_methods means that you can't call actual commands without authentication.
+# Anonymous users can list the commands, but not call them.
+COMMANDS = {
     'item_title': 'commands',
     'public_methods': ['GET'],
     'public_item_methods': [],
     'versioning': True,
-    'schema': commands_schema,
+    'schema': COMMANDS_SCHEMA,
 }
 
-#
 # Domain definition. Tells Eve what resources are available on this domain.
-#
-
 DOMAIN = {
-    'sites': sites,
-    'code': code,
-    'commands': commands,
-    'query': query,
-    'statistics': statistics,
+    'sites': SITES,
+    'code': CODE,
+    'commands': COMMANDS,
+    'query': QUERY,
+    'statistics': STATISTICS,
 }
