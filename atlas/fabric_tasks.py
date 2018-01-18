@@ -380,9 +380,10 @@ def site_remove(site):
     if NFS_MOUNT_FILES_DIR:
         nfs_dir = NFS_MOUNT_LOCATION[ENVIRONMENT]
         nfs_files_dir = '{0}/sitefiles/{1}'.format(nfs_dir, site['sid'])
-        remove_directory(nfs_files_dir)
+        #set to sudo remove because of file permissions
+        sudo_remove_directory(nfs_files_dir)
 
-    remove_directory(code_directory)
+    sudo_remove_directory(code_directory)
 
 
 @roles('webserver_single')
@@ -525,6 +526,11 @@ def create_directory_structure(folder):
 def remove_directory(folder):
     log.info('fabric_tasks | Remove directory | Directory - %s', folder)
     run('rm -rf {0}'.format(folder))
+
+
+def sudo_remove_directory(folder):
+    log.info('fabric_tasks | Remove directory | Directory - %s', folder)
+    run('sudo rm -rf {0}'.format(folder))
 
 
 def remove_symlink(symlink):

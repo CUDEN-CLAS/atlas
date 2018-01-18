@@ -26,7 +26,7 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
     elseif ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
-      header('Location: https://www-test.colorado.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      header('Location: https://clas-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
     elseif ($_SERVER['HTTP_HOST'] == 'www-dev.colorado.edu' &&
@@ -116,7 +116,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
         break;
 
       case 'cust_test':
-        $base_url .= 'https://www-test.colorado.edu';
+        $base_url .= 'https://clas-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
@@ -153,6 +153,7 @@ $conf['varnish_control_terminal'] = '{{varnish_control}}';
 $conf['varnish_version'] = 4;
 {% if environment == 'test' %}
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
+{% endif %}
 {% endif %}
 
 {% if environment in ['local','dev'] %}
