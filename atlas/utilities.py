@@ -2,31 +2,38 @@
 Utility functions.
 """
 import sys
-import requests
-import ldap
+import logging
 import json
 import smtplib
-
-import OpenSSL
-import mysql.connector as mariadb
-
-from re import compile, search
-from cryptography.fernet import Fernet
+from re import compile as re_compile
 from random import choice
 from string import lowercase
 from hashlib import sha1
-from eve.auth import BasicAuth
-from flask import current_app, g
 from email.mime.text import MIMEText
-from atlas.config import *
 
-# Only needed for importing from Inventory.
-from Crypto.Cipher import AES
-from Crypto import Random
+from cryptography.fernet import Fernet
+from eve.auth import BasicAuth
+from flask import g
+import OpenSSL
+import mysql.connector as mariadb
+import requests
+import ldap
 
-path = '/data/code'
-if path not in sys.path:
-    sys.path.append(path)
+from atlas.config import (ATLAS_LOCATION, ALLOWED_USERS, LDAP_SERVER, LDAP_ORG_UNIT,
+                          LDAP_DNS_DOMAIN_NAME, ENCRYPTION_KEY, DATABASE_USER,
+                          DATABASE_PASSWORD, ENVIRONMENT, SLACK_NOTIFICATIONS,
+                          SERVICE_ACCOUNT_USERNAME, SERVICE_ACCOUNT_PASSWORD, SSL_VERIFICATION,
+                          SLACK_USERNAME, SLACK_URL, SEND_NOTIFICATION_EMAILS,
+                          SEND_NOTIFICATION_FROM_EMAIL, EMAIL_HOST, EMAIL_PORT, EMAIL_USERNAME,
+                          EMAIL_PASSWORD, EMAIL_USERS_EXCLUDE)
+from atlas.config_servers import (SERVERDEFS, API_URLS)
+
+# Setup a sub-logger. See tasks.py for longer comment.
+log = logging.getLogger('atlas.utilities')
+
+
+if ATLAS_LOCATION not in sys.path:
+    sys.path.append(ATLAS_LOCATION)
 
 
 class AtlasBasicAuth(BasicAuth):
@@ -34,52 +41,42 @@ class AtlasBasicAuth(BasicAuth):
     Basic Authentication
     """
     def check_auth(self, username, password, allowed_roles=['default'], resource='default', method='default'):
+        """
+        Check user supplied credentials against LDAP.
+        """
         # Check if username is in 'allowed users' defined in config_local.py
-        if username not in allowed_users:
+        if username not in ALLOWED_USERS:
             return False
-        # Test credentials against LDAP.
-        # Initialize LDAP. The initialize() method returns an LDAPObject
-        # object, which contains methods for performing LDAP operations and
-        # retrieving information about the LDAP connection and transactions.
-        l = ldap.initialize(ldap_server)
-
-        # Start the connection in a secure manner. Catch any errors and print
-        # the description if present.
-        try:
-            l.start_tls_s()
-        except ldap.LDAPError, e:
-            current_app.logger.error(e.message)
-            if type(e.message) == dict and e.message.has_key('desc'):
-                current_app.logger.error(e.message['desc'])
-            else:
-                current_app.logger.error(e)
+        # Initialize LDAP. The initialize() method returns an LDAPObject object, which contains
+        # methods for performing LDAP operations and retrieving information about the LDAP
+        # connection and transactions.
+        l = ldap.initialize(LDAP_SERVER)
 
         #ldap_distinguished_name = "uid={0},ou={1},{2}".format(username, ldap_org_unit, ldap_dns_domain_name)
         ldap_distinguished_name = "CN={0},OU=users,OU=DEANS,OU=CLAS,dc=ucdenver,dc=pvt".format(username)
-        current_app.logger.debug(ldap_distinguished_name)
+        log.debug(ldap_distinguished_name)
 
         # Add the username as a Flask application global.
         g.username = username
 
         try:
-            # Try a synchronous bind (we want synchronous so that the command
-            # is blocked until the bind gets a result. If you can bind, the
-            # credentials are valid.
-            result = l.simple_bind_s(ldap_distinguished_name, password)
-            current_app.logger.debug('LDAP - {0} - Bind successful'.format(username))
+            # Try a synchronous bind (we want synchronous so that the command is blocked until the
+            # bind gets a result. If you can bind, the credentials are valid.
+            l.simple_bind_s(ldap_distinguished_name, password)
+            log.debug('LDAP | %s | Bind successful', username)
             return True
         except ldap.INVALID_CREDENTIALS:
-            current_app.logger.debug('LDAP - {0} - Invalid credentials'.format(username))
+            log.debug('LDAP | %s | Invalid credentials', username)
         finally:
             try:
-                current_app.logger.debug('LDAP - unbind')
+                log.debug('LDAP | unbind')
                 l.unbind()
             except ldap.LDAPError, e:
-                current_app.logger.error('LDAP - unbind failed')
+                log.error('LDAP | unbind failed')
                 pass
 
         # Apparently this was a bad login attempt
-        current_app.logger.info('LDAP - {0} - Bind failed'.format(username))
+        log.info('LDAP | %s | Bind failed', username)
         return False
 
 
@@ -93,8 +90,7 @@ def randomstring(length=14):
 
 def mysql_password():
     """
-    Hash string twice with SHA1 and return uppercase hex digest, prepended with
-    an astrix.
+    Hash string twice with SHA1 and return uppercase hex digest, prepended with an asterisk.
 
     This function is identical to the MySQL PASSWORD() function.
     """
@@ -104,23 +100,22 @@ def mysql_password():
     return "*" + pass2.upper()
 
 
-def decrypt_old(key, encrypted):
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(key, AES.MODE_CFB, iv)
-    decrypted = cipher.decrypt(encrypted.decode("hex"))[len(iv):]
-    return decrypted
-
-
 # See https://cryptography.io/en/latest/fernet/#implementation
 def encrypt_string(string):
-    cipher = Fernet(encryption_key)
+    """
+    Use Fernet symmetric encryption to encrypt a string.
+    """
+    cipher = Fernet(ENCRYPTION_KEY)
     msg = cipher.encrypt(string)
     encrypted = msg.encode('hex')
     return encrypted
 
 
 def decrypt_string(string):
-    cipher = Fernet(encryption_key)
+    """
+    Use Fernet symmetric encryption to decrypt a string.
+    """
+    cipher = Fernet(ENCRYPTION_KEY)
     msg = string.decode('hex')
     decrypted = cipher.decrypt(msg)
     return decrypted
@@ -131,13 +126,13 @@ def create_database(site_sid, site_db_key):
     Create a database and user for the
     :param site: site object
     """
-    print 'Create Database | {0}'.format(site_sid)
+    log.info('Create Database | %s', site_sid)
     # Start connection
     mariadb_connection = mariadb.connect(
-        user=database_user,
-        password=database_password,
-        host=serverdefs[environment]['database_servers']['master'],
-        port=serverdefs[environment]['database_servers']['port']
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        host=SERVERDEFS[ENVIRONMENT]['database_servers']['master'],
+        port=SERVERDEFS[ENVIRONMENT]['database_servers']['port']
     )
 
     cursor = mariadb_connection.cursor()
@@ -146,28 +141,48 @@ def create_database(site_sid, site_db_key):
     try:
         cursor.execute("CREATE DATABASE `{0}`;".format(site_sid))
     except mariadb.Error as error:
-        print 'Create Database Error: {0}'.format(error)
+        log.error('Create Database | %s | %s', site_sid, error)
         raise
 
     instance_database_password = decrypt_string(site_db_key)
     # Add user
     try:
+<<<<<<< HEAD:utilities.py
         cursor.execute("CREATE USER '{0}'@'192.168.33.0/255.255.255.0' IDENTIFIED BY '{1}';".format(site_sid, instance_database_password))
+=======
+        if ENVIRONMENT != 'local':
+            cursor.execute("CREATE USER '{0}'@'{1}' IDENTIFIED BY '{2}';".format(
+                site_sid,
+                SERVERDEFS[ENVIRONMENT]['database_servers']['user_host_pattern'],
+                instance_database_password))
+        else:
+            cursor.execute("CREATE USER '{0}'@'localhost' IDENTIFIED BY '{1}';".format(
+                site_sid, instance_database_password))
+>>>>>>> master:atlas/utilities.py
     except mariadb.Error as error:
-        print 'Create User Error: {0}'.format(error)
+        log.error('Create User | %s | %s', site_sid, error)
         raise
 
     # Grant privileges
     try:
+<<<<<<< HEAD:utilities.py
         cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'192.168.33.0/255.255.255.0';".format(site_sid))
+=======
+        if ENVIRONMENT != 'local':
+            cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'{1}';".format(
+                site_sid,
+                SERVERDEFS[ENVIRONMENT]['database_servers']['user_host_pattern']))
+        else:
+            cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'localhost';".format(site_sid))
+>>>>>>> master:atlas/utilities.py
     except mariadb.Error as error:
-        print 'Grant Privileges Error: {0}'.format(error)
+        log.error('Grant Privileges | %s | %s', site_sid, error)
         raise
 
     mariadb_connection.commit()
     mariadb_connection.close()
 
-    print 'Create Database | {0} | Success'.format(site_sid)
+    log.info('Create Database | %s | Success', site_sid)
 
 
 def delete_database(site_sid):
@@ -176,14 +191,13 @@ def delete_database(site_sid):
 
     :param site_id: SID for instance to remove.
     """
-    print 'Delete DB | {0}'.format(site_sid)
+    log.info('Delete Database | %s', site_sid)
     # Start connection
-    host = serverdefs[environment]['database_servers']['master'] if environment != 'local' else 'express.local'
     mariadb_connection = mariadb.connect(
-        user=database_user,
-        password=database_password,
-        host=host,
-        port=serverdefs[environment]['database_servers']['port']
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        host=SERVERDEFS[ENVIRONMENT]['database_servers']['master'],
+        port=SERVERDEFS[ENVIRONMENT]['database_servers']['port']
     )
     cursor = mariadb_connection.cursor()
 
@@ -191,16 +205,23 @@ def delete_database(site_sid):
     try:
         cursor.execute("DROP DATABASE IF EXISTS `{0}`;".format(site_sid))
     except mariadb.Error as error:
-        print 'Drop Database Error: {0}'.format(error)
+        log.error('Drop Database | %s | %s', site_sid, error)
 
     # Drop user
     try:
+<<<<<<< HEAD:utilities.py
         cursor.execute("DROP USER '{0}'@'192.168.33.0/255.255.255.0';".format(site_sid))
+=======
+        cursor.execute("DROP USER '{0}'@'{1}';".format(
+            site_sid,
+            SERVERDEFS[ENVIRONMENT]['database_servers']['user_host_pattern']))
+>>>>>>> master:atlas/utilities.py
     except mariadb.Error as error:
-        print 'Drop User Error: {0}'.format(error)
+        log.error('Drop User | %s | %s', site_sid, error)
 
     mariadb_connection.commit()
     mariadb_connection.close()
+    log.info('Delete Database | %s | Success', site_sid)
 
 
 def post_eve(resource, payload):
@@ -210,13 +231,14 @@ def post_eve(resource, payload):
     :param resource: A resource as defined in config_data_structure.py
     :param payload: argument string
     """
-    url = "{0}/{1}".format(api_urls[environment], resource)
+    url = "{0}/{1}".format(API_URLS[ENVIRONMENT], resource)
     headers = {"content-type": "application/json"}
-    r = requests.post(url, auth=(service_account_username, service_account_password), headers=headers, verify=ssl_verification, data=json.dumps(payload))
-    if r.ok:
-        return r.json()
-    else:
-        return r.text
+    try:
+        r = requests.post(url, auth=(SERVICE_ACCOUNT_USERNAME, SERVICE_ACCOUNT_PASSWORD), headers=headers, verify=SSL_VERIFICATION, data=json.dumps(payload))
+    except Exception as error:
+        log.error('POST to Atlas | URL - %s | Error - %s', url, error)
+
+    return r.json()
 
 
 def get_eve(resource, query=None):
@@ -228,15 +250,18 @@ def get_eve(resource, query=None):
     :return: dict of items that match the query string.
     """
     if query:
-        url = "{0}/{1}?{2}".format(api_urls[environment], resource, query)
+        url = "{0}/{1}?{2}".format(API_URLS[ENVIRONMENT], resource, query)
     else:
-        url = "{0}/{1}".format(api_urls[environment], resource)
-    print(url)
-    r = requests.get(url, auth=(service_account_username, service_account_password), verify=ssl_verification)
-    if r.ok:
-        return r.json()
-    else:
-        return r.text
+        url = "{0}/{1}".format(API_URLS[ENVIRONMENT], resource)
+    log.debug('utilities | Get Eve | url - %s', url)
+
+    try:
+        r = requests.get(url, auth=(SERVICE_ACCOUNT_USERNAME,
+                                    SERVICE_ACCOUNT_PASSWORD), verify=SSL_VERIFICATION)
+    except Exception as error:
+        log.error('GET to Atlas | URL - %s | Error - %s', url, error)
+
+    return r.json()
 
 
 def get_single_eve(resource, id):
@@ -247,13 +272,16 @@ def get_single_eve(resource, id):
     :param id: _id string
     :return: dict of items that match the query string.
     """
-    url = "{0}/{1}/{2}".format(api_urls[environment], resource, id)
-    print(url)
-    r = requests.get(url, auth=(service_account_username, service_account_password), verify=ssl_verification)
-    if r.ok:
-        return r.json()
-    else:
-        return r.text
+    url = "{0}/{1}/{2}".format(API_URLS[ENVIRONMENT], resource, id)
+    log.debug('utilities | Get Eve Single | url - %s', url)
+
+    try:
+        r = requests.get(url, auth=(SERVICE_ACCOUNT_USERNAME,
+                                    SERVICE_ACCOUNT_PASSWORD), verify=SSL_VERIFICATION)
+    except Exception as error:
+        log.error('GET to Single item in Atlas | URL - %s | Error - %s', url, error)
+
+    return r.json()
 
 def patch_eve(resource, id, request_payload):
     """
@@ -264,14 +292,18 @@ def patch_eve(resource, id, request_payload):
     :param request_payload:
     :return:
     """
-    url = "{0}/{1}/{2}".format(api_urls[environment], resource, id)
+    url = "{0}/{1}/{2}".format(API_URLS[ENVIRONMENT], resource, id)
     get_etag = get_single_eve(resource, id)
     headers = {'Content-Type': 'application/json', 'If-Match': get_etag['_etag']}
-    r = requests.patch(url, headers=headers, data=json.dumps(request_payload), auth=(service_account_username, service_account_password), verify=ssl_verification)
-    if r.ok:
-        return r.json()
-    else:
-        return r.text
+
+    try:
+        r = requests.patch(url, headers=headers, data=json.dumps(request_payload), auth=(
+            SERVICE_ACCOUNT_USERNAME, SERVICE_ACCOUNT_PASSWORD), verify=SSL_VERIFICATION)
+        log.debug('PATCH to Atlas | URL - %s | Response - %s', url, r.text)
+    except Exception as error:
+        log.error('PATCH to Atlas | URL - %s | Error - %s', url, error)
+
+    return r.json()
 
 
 def delete_eve(resource, id):
@@ -282,14 +314,16 @@ def delete_eve(resource, id):
     :param id:
     :return:
     """
-    url = "{0}/{1}/{2}".format(api_urls[environment], resource, id)
+    url = "{0}/{1}/{2}".format(API_URLS[ENVIRONMENT], resource, id)
     get_etag = get_single_eve(resource, id)
     headers = {'Content-Type': 'application/json', 'If-Match': get_etag['_etag']}
-    r = requests.delete(url, headers=headers, auth=(service_account_username, service_account_password), verify=ssl_verification)
-    if r.ok:
-        return r.status_code
-    else:
-        return r.text
+    try:
+        r = requests.delete(url, headers=headers, auth=(
+            SERVICE_ACCOUNT_USERNAME, SERVICE_ACCOUNT_PASSWORD), verify=SSL_VERIFICATION)
+    except Exception as error:
+        log.error('DELETE to Atlas | URL - %s | Error - %s', url, error)
+
+    return r.status_code
 
 
 def get_current_code(name, code_type):
@@ -318,13 +352,11 @@ def get_code(name, code_type=''):
     :return: _id of the item.
     """
     if code_type:
-        query = 'where={{"meta.name":"{0}","meta.code_type":"{1}"}}'.format(
-            name,
-            code_type)
+        query = 'where={{"meta.name":"{0}","meta.code_type":"{1}"}}'.format(name, code_type)
     else:
         query = 'where={{"meta.name":"{0}"}}'.format(name)
     code_get = get_eve('code', query)
-    print(code_get)
+    log.debug('Get Code | Result | %s', code_get)
     return code_get
 
 
@@ -342,23 +374,27 @@ def get_code_name_version(code_id):
 
 def get_code_label(code_id):
     """
-    Get the label for a code item.
+    Get the label for a code item if it has one, otherwise use the machine name and version.
+
     :param code_id: string '_id' for a code item
-    :return: string 'label'-'version'
+    :return: string 'label or 'name-version'
     """
     code = get_single_eve('code', code_id)
-    return code['meta']['label']
+    if code['meta'].get('meta'):
+        return code['meta']['label']
+    else:
+        return get_code_name_version(code_id)
 
 
 def import_code(query):
     """
-    Import code definitions from a URL. Should be a JSON file export from Atlas
-     or a live Atlas code endpoint.
+    Import code definitions from a URL. Should be a JSON file export from Atlas or a live Atlas code
+    endpoint.
 
     :param query: URL for JSON to import
     """
     r = requests.get(query)
-    print(r.json())
+    log.debug('Import Code | JSON Import | %s', r.json())
     data = r.json()
     for code in data['_items']:
         payload = {
@@ -384,7 +420,7 @@ def rebalance_update_groups(item):
     :param item: command item
     :return:
     """
-    site_query = 'where={0}'.format(item['query'])
+    site_query = 'where={0}&max_results=2000'.format(item['query'])
     sites = get_eve('sites', site_query)
     installed_update_group = 0
     launched_update_group = 0
@@ -408,64 +444,6 @@ def rebalance_update_groups(item):
                     patch_eve('sites', site['_id'], patch_payload)
 
 
-# Deprecated use 'post_to_slack_payload'
-def post_to_slack(message, title, link='', attachment_text='', level='good', user=slack_username):
-    """
-    Posts a message to a given channel using the Slack Incoming Webhooks API.
-    Links should be in the message or attachment_text in the format:
-    `<https://www.colorado.edu/p1234|New Website>`.
-
-    Message Output Format:
-        Atlas [BOT] - 3:00 PM
-        `message`
-        # `title` (with `link`)
-        # `attachment_text`
-
-
-    :param message: Text that appears before the attachment
-    :param title: Often the name of the site
-    :param link: Often a link to the site
-    :param attachment_text: Description of result of action
-    :param level: 'Level' creates the color bar next to the fields.
-     Values for level are 'good' (green), 'warning' (orange), 'danger' (red)
-     or a hex value.
-     :param user: The user that called the action.
-    """
-    # We want to notify the channel if we get a message with 'fail' in it.
-    if slack_notify:
-        regexp = compile(r'fail')
-        if regexp.search(message) is not None:
-            message_text = '<!channel> ' + environment + ' - ' + message
-        else:
-            message_text = environment + ' - ' + message
-        fallback = title + ' - ' + link + ' - ' + attachment_text
-        payload = {
-            "text": message_text,
-            "username": 'Atlas',
-            "attachments": [
-                {
-                    "fallback": fallback,
-                    "color": level,
-                    "author_name": user,
-                    "title": title,
-                    "title_link": link,
-                    "text": attachment_text,
-                }
-            ]
-        }
-        if environment == 'local':
-            payload['channel'] = '@{0}'.format(slack_username)
-        elif 'cron' in attachment_text:
-            payload['channel'] = 'cron'
-
-        # We need 'json=payload' vs. 'payload' because arguments can be passed
-        # in any order. Using json=payload instead of data=json.dumps(payload)
-        # so that we don't have to encode the dict ourselves. The Requests
-        # library will do it for us.
-        r = requests.post(slack_url, json=payload)
-        if not r.ok:
-            print r.text
-
 def post_to_slack_payload(payload):
     """
     Posts a message to a given channel using the Slack Incoming Webhooks API.
@@ -473,47 +451,37 @@ def post_to_slack_payload(payload):
 
     :param payload: Payload suitable for POSTing to Slack.
     """
-    if slack_notify:
-        if environment == 'local':
-            payload['channel'] = '@{0}'.format(slack_username)
+    if SLACK_NOTIFICATIONS:
+        if ENVIRONMENT == 'local':
+            payload['channel'] = '@{0}'.format(SLACK_USERNAME)
 
         # We need 'json=payload' vs. 'payload' because arguments can be passed
         # in any order. Using json=payload instead of data=json.dumps(payload)
         # so that we don't have to encode the dict ourselves. The Requests
         # library will do it for us.
-        r = requests.post(slack_url, json=payload)
-        if not r.ok:
-            print r.text
-
-def post_to_logstash_payload(payload):
-    """
-    Posts a message to our logstash instance.
-
-    :param payload: JSON encoded payload.
-    """
-    if environment != 'local':
-        r = requests.post(logstash_url, json=payload)
+        r = requests.post(SLACK_URL, json=payload)
         if not r.ok:
             print r.text
 
 
-
-def send_email(message, subject, to):
+def send_email(email_message, email_subject, email_to):
     """
     Sends email
-    :param message: content of the email to be sent.
-    :param subject: content of the subject line
-    :param to: list of email address(es) the email will be sent to
-    """
-    if send_notification_emails:
-        # We only send plaintext to prevent abuse.
-        msg = MIMEText(message, 'plain')
-        msg['Subject'] = subject
-        msg['From'] = send_notification_from_email
-        msg['To'] = ", ".join(to)
 
-        s = smtplib.SMTP(email_host, email_port)
+    :param email_message: content of the email to be sent.
+    :param email_subject: content of the subject line
+    :param email_to: list of email address(es) the email will be sent to
+    """
+    if SEND_NOTIFICATION_EMAILS:
+        # We only send plaintext to prevent abuse.
+        msg = MIMEText(email_message, 'plain')
+        msg['Subject'] = email_subject
+        msg['From'] = SEND_NOTIFICATION_FROM_EMAIL
+        final_email_to = [x for x in email_to if x not in EMAIL_USERS_EXCLUDE]
+        msg['To'] = ", ".join(final_email_to)
+
+        s = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
         s.starttls()
-        s.login(email_username, email_password)
-        s.sendmail(send_notification_from_email, to, msg.as_string())
+        s.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+        s.sendmail(SEND_NOTIFICATION_FROM_EMAIL, final_email_to, msg.as_string())
         s.quit()

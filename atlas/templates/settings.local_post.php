@@ -15,7 +15,7 @@ $databases['default']['default'] = array(
   'username' => '{{ sid }}',
   'password' => '{{ pw }}',
   'host' => '{{ database_servers.master }}',
-  'port' => '3306',
+  'port' => '{{ database_servers.port }}',
   'prefix' => '',
 );
 {% if database_servers.slaves %}
@@ -27,7 +27,7 @@ $databases['default']['slave'][] = array(
   'username' => '{{ sid }}',
   'password' => '{{ pw }}',
   'host' => '{{ slave }}',
-  'port' => '3306',
+  'port' => '{{ database_servers.port }}',
   'prefix' => '',
 );
 {% endfor %}
@@ -42,5 +42,24 @@ $databases['default']['default'] = array(
   'port' => '3306',
   'prefix' => '',
 );
+{% endif %}
 
+{% if environment == 'local' %}
+// Allow self signed certs for python.local.
+$conf['drupal_ssl_context_options'] = array(
+  'default' => array(
+    'ssl' => array(
+      'verify_peer' => TRUE,
+      'verify_peer_name' => TRUE,
+      'allow_self_signed' => FALSE,
+    ),
+  ),
+  'python.local' => array(
+    'ssl' => array(
+      'verify_peer' => FALSE,
+      'verify_peer_name' => FALSE,
+      'allow_self_signed' => TRUE,
+    ),
+  ),
+);
 {% endif %}
