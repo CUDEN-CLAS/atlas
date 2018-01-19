@@ -147,9 +147,6 @@ def create_database(site_sid, site_db_key):
     instance_database_password = decrypt_string(site_db_key)
     # Add user
     try:
-<<<<<<< HEAD:utilities.py
-        cursor.execute("CREATE USER '{0}'@'192.168.33.0/255.255.255.0' IDENTIFIED BY '{1}';".format(site_sid, instance_database_password))
-=======
         if ENVIRONMENT != 'local':
             cursor.execute("CREATE USER '{0}'@'{1}' IDENTIFIED BY '{2}';".format(
                 site_sid,
@@ -158,23 +155,18 @@ def create_database(site_sid, site_db_key):
         else:
             cursor.execute("CREATE USER '{0}'@'localhost' IDENTIFIED BY '{1}';".format(
                 site_sid, instance_database_password))
->>>>>>> master:atlas/utilities.py
     except mariadb.Error as error:
         log.error('Create User | %s | %s', site_sid, error)
         raise
 
     # Grant privileges
     try:
-<<<<<<< HEAD:utilities.py
-        cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'192.168.33.0/255.255.255.0';".format(site_sid))
-=======
         if ENVIRONMENT != 'local':
             cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'{1}';".format(
                 site_sid,
                 SERVERDEFS[ENVIRONMENT]['database_servers']['user_host_pattern']))
         else:
             cursor.execute("GRANT ALL PRIVILEGES ON {0}.* TO '{0}'@'localhost';".format(site_sid))
->>>>>>> master:atlas/utilities.py
     except mariadb.Error as error:
         log.error('Grant Privileges | %s | %s', site_sid, error)
         raise
@@ -209,13 +201,9 @@ def delete_database(site_sid):
 
     # Drop user
     try:
-<<<<<<< HEAD:utilities.py
-        cursor.execute("DROP USER '{0}'@'192.168.33.0/255.255.255.0';".format(site_sid))
-=======
         cursor.execute("DROP USER '{0}'@'{1}';".format(
             site_sid,
             SERVERDEFS[ENVIRONMENT]['database_servers']['user_host_pattern']))
->>>>>>> master:atlas/utilities.py
     except mariadb.Error as error:
         log.error('Drop User | %s | %s', site_sid, error)
 

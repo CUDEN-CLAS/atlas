@@ -23,7 +23,7 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
       header('Location: https://clas.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
-    elseif ($_SERVER['HTTP_HOST'] == 'clas.ucdenver.edu' &&
+    elseif ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
       header('Location: https://clas-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
@@ -71,19 +71,15 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
   // Memcache and Varnish Backends.
   $conf['cache_backends'] = array(
-<<<<<<< HEAD:templates/settings.php
-    'profiles/express/modules/contrib/varnish/varnish.cache.inc',
-    'profiles/express/modules/contrib/memcache/memcache.inc',
-=======
+
 {% if environment != 'local' %}
     'profiles/{{profile}}/modules/contrib/varnish/varnish.cache.inc',
 {% endif %}
     'profiles/{{profile}}/modules/contrib/memcache/memcache.inc',
->>>>>>> master:atlas/templates/settings.php
   );
 
   // Memcache lock file location.
-  $conf['lock_inc'] = 'profiles/express/modules/contrib/memcache/memcache-lock.inc';
+  $conf['lock_inc'] = 'profiles/{{profile}}/modules/contrib/memcache/memcache-lock.inc';
 
   // Setup cache_form bin.
   $conf['cache_class_cache_form'] = 'DrupalDatabaseCache';
@@ -117,32 +113,19 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
     switch($_SERVER['WWWNG_ENV']) {
       case 'cust_dev':
-<<<<<<< HEAD:templates/settings.php
-        $conf['environment_indicator_text'] = 'DEV';
-        $conf['environment_indicator_color'] = 'green';
         $base_url .= 'https://www-dev.ucdenver.edu';
         break;
 
       case 'cust_test':
-        $conf['environment_indicator_text'] = 'TEST';
-        $conf['environment_indicator_color'] = 'yellow';
-=======
         $base_url .= 'https://www-dev.colorado.edu';
         break;
 
       case 'cust_test':
->>>>>>> master:atlas/templates/settings.php
         $base_url .= 'https://clas-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
-<<<<<<< HEAD:templates/settings.php
-        $conf['environment_indicator_text'] = 'PRODUCTION';
-        $conf['environment_indicator_color'] = 'red';
         $base_url .= 'https://clas.ucdenver.edu';
-=======
-        $base_url .= 'https://www.colorado.edu';
->>>>>>> master:atlas/templates/settings.php
         break;
 
       case 'express_local':
@@ -176,13 +159,7 @@ $conf['varnish_version'] = 4;
 {% if environment == 'test' %}
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
 {% endif %}
-<<<<<<< HEAD:templates/settings.php
-
-
-
-=======
 {% endif %}
->>>>>>> master:atlas/templates/settings.php
 
 {% if environment in ['local','dev'] %}
 $conf['drupal_http_request_fails'] = FALSE;
@@ -190,18 +167,9 @@ $conf['drupal_http_request_fails'] = FALSE;
 // Google Analytics
 $conf['googleanalytics_account'] = 'UA-733655-8';
 
-<<<<<<< HEAD:templates/settings.php
-// cu_classes_bundle API variables.
-$conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
-$conf['cu_class_import_api_password'] = "YEF9BYQSfFr8UXNmDvM5";
-$conf['cu_class_import_institutions'] = array('B-CUBLD' => 'B-CUBLD');
-
-
-=======
 {% if environment == 'local' %}
 $conf['error_level'] = 2;
 {% endif %}
->>>>>>> master:atlas/templates/settings.php
 
 /**
  * Include a post local settings file if it exists.

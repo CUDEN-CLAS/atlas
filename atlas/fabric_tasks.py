@@ -186,7 +186,6 @@ def site_provision(site):
     if NFS_MOUNT_FILES_DIR:
         nfs_dir = NFS_MOUNT_LOCATION[ENVIRONMENT]
         nfs_files_dir = '{0}/sitefiles/{1}/files'.format(nfs_dir, site['sid'])
-        nfs_site_dir = '{0}/sitefiles/{1}'.format(nfs_dir, site['sid'])
         try:
             execute(create_nfs_files_dir, nfs_dir=nfs_dir, site_sid=site['sid'])
         except FabricException as error:
@@ -384,10 +383,7 @@ def site_remove(site):
     if NFS_MOUNT_FILES_DIR:
         nfs_dir = NFS_MOUNT_LOCATION[ENVIRONMENT]
         nfs_files_dir = '{0}/sitefiles/{1}'.format(nfs_dir, site['sid'])
-<<<<<<< HEAD:fabfile/__init__.py
-=======
         #set to sudo remove because of file permissions
->>>>>>> master:atlas/fabric_tasks.py
         sudo_remove_directory(nfs_files_dir)
 
     sudo_remove_directory(code_directory)
@@ -421,21 +417,10 @@ def command_run(site, command, warn_only=True):
     :param command: Command to run
     :return:
     """
-<<<<<<< HEAD:fabfile/__init__.py
-    print 'Command - {0}\n{1}'.format(site['sid'], command)
-    web_directory = '{0}/{1}/{2}'.format(
-        sites_web_root,
-        site['type'],
-        site['sid'])
-    with settings(warn_only=warn_only):
-        with cd(web_directory):
-             run('{0}'.format(command))
-=======
     log.info('Command | Multiple Servers | Site - %s | Command - %s', site['sid'], command)
     web_directory = '{0}/{1}/{2}'.format(SITES_WEB_ROOT, site['type'], site['sid'])
     with cd(web_directory):
         run('{0}'.format(command))
->>>>>>> master:atlas/fabric_tasks.py
 
 
 @roles('webserver_single')
@@ -544,6 +529,7 @@ def create_directory_structure(folder):
 def remove_directory(folder):
     log.info('fabric_tasks | Remove directory | Directory - %s', folder)
     run('rm -rf {0}'.format(folder))
+
 
 def sudo_remove_directory(folder):
     print('Sudo Remove directory\n{0}'.format(folder))
