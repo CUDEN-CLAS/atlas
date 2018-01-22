@@ -192,8 +192,8 @@ def site_provision(site):
             log.error('Site | Provision | Create nfs directory failed | Error - %s', error)
             return error
         # Needed to change owner to apache on files folder
-        with cd(nfs_site_dir):
-            run('sudo chown {0} files'.format(webserver_user))
+        #with cd(nfs_files_dir):
+        run('sudo chown {0} {1}'.format(WEBSERVER_USER, nfs_files_dir))
         # Replace default files dir with this one
         site_files_dir = code_directory_current + '/sites/default/files'
         try:

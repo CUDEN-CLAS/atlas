@@ -117,10 +117,6 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
         break;
 
       case 'cust_test':
-        $base_url .= 'https://www-dev.colorado.edu';
-        break;
-
-      case 'cust_test':
         $base_url .= 'https://clas-test.ucdenver.pvt';
         break;
 

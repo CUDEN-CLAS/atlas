@@ -357,7 +357,7 @@ def site_provision(site):
 
     # Slack notification
     slack_title = 'Site provision - Success'
-    slack_text = 'Site provision - Success - {0}/sites/{1}'.format(BASE_URLS[ENVIRONMENT], site['path'])
+    slack_text = 'Site provision - Success - {0}/sites/{1}'.format(API_URLS[ENVIRONMENT], site['_id'])
     slack_color = 'good'
     slack_link = '{0}/{1}'.format(BASE_URLS[ENVIRONMENT], site['path'])
 
