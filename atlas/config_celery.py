@@ -11,7 +11,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
     'taskmeta_collection': 'taskmeta_collection',
 }
 
-CELERY_TIMEZONE = 'MST'
+CELERY_TIMEZONE = 'America/Denver'
 CELERY_ENABLE_UTC = False
 # Time in seconds
 CELERYD_TASK_TIME_LIMIT = 1200
