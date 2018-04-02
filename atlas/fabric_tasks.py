@@ -468,7 +468,7 @@ def cache_clear(sid):
     with cd(code_directory_current):
         run('sudo -u {0} drush cc all'.format(WEBSERVER_USER))
 
-
+@roles('webserver_single')
 def drush_cache_clear(sid):
     code_directory_current = '{0}/{1}/current'.format(SITES_CODE_ROOT, sid)
     with cd(code_directory_current):
