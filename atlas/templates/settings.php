@@ -42,6 +42,20 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
       exit();
     }
   }
+  if (isset($_SERVER['WWWNG_BIZ'])) {
+    if ($_SERVER['HTTP_HOST'] == 'biz-test.ucdenver.pvt' &&
+      strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
+      header('HTTP/1.0 301 Moved Permanently');
+      header('Location: https://biz-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      exit();
+    }
+    elseif ($_SERVER['HTTP_HOST'] == 'biz.ucdenver.edu' &&
+      strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
+      header('HTTP/1.0 301 Moved Permanently');
+      header('Location: https://biz.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      exit();
+    }
+  }
 }
 
 $host = $_SERVER['HTTP_HOST'];
@@ -51,7 +65,7 @@ $conf['page_compression'] = 0;
 
 // Set up environment specific variables for wwwng.
 // If wwwng env isset or php executed through cli (drush).
-if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
+if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || PHP_SAPI === "cli") {
 
   // Never allow updating modules through UI.
   $conf['allow_authorize_operations'] = FALSE;
@@ -122,19 +136,46 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
     switch($_SERVER['WWWNG_ENV']) {
       case 'cust_dev':
         $base_url .= 'https://www-dev.ucdenver.edu';
+        $cookie_domain = '.www-dev.colorado.edu';
         break;
 
       case 'cust_test':
         $base_url .= 'https://clas-test.ucdenver.pvt';
+        $cookie_domain = '.clas-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
         $base_url .= 'https://clas.ucdenver.edu';
+        $cookie_domain = '.clas.ucdenver.edu';
         break;
 
       case 'express_local':
         $base_url .= 'https://express.local';
         // We don't need a cookie_domain for locals.
+        break;
+
+    }
+    if ($pool != "poolb-homepage") {
+      $base_url .= '/' . $path;
+    }
+    ini_set('session.cookie_lifetime', 93600);
+    ini_set('session.cookie_path', '/' . $path);
+  }
+  if (isset($_SERVER['WWWNG_BIZ'])) {
+    global $base_url;
+
+    switch($_SERVER['WWWNG_BIZ']) {
+
+      case 'cust_test':
+        $conf['environment_indicator_text'] = 'TEST';
+        $conf['environment_indicator_color'] = 'yellow';
+        $base_url .= 'https://biz-test.ucdenver.pvt';
+        break;
+
+      case 'cust_prod':
+        $conf['environment_indicator_text'] = 'PRODUCTION';
+        $conf['environment_indicator_color'] = 'red';
+        $base_url .= 'https://biz.ucdenver.edu';
         break;
 
     }
