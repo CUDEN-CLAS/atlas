@@ -23,7 +23,7 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
       header('Location: https://clas.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
       exit();
     }
-    elseif ($_SERVER['HTTP_HOST'] == 'clas.ucdenver.edu' &&
+    elseif ($_SERVER['HTTP_HOST'] == 'clas-test.ucdenver.pvt' &&
       strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
       header('HTTP/1.0 301 Moved Permanently');
       header('Location: https://clas-test.ucdenver.pvt'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
@@ -71,18 +71,23 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
   // Memcache and Varnish Backends.
   $conf['cache_backends'] = array(
-    'profiles/express/modules/contrib/varnish/varnish.cache.inc',
-    'profiles/express/modules/contrib/memcache/memcache.inc',
+
+{% if environment != 'local' %}
+    'profiles/{{profile}}/modules/contrib/varnish/varnish.cache.inc',
+{% endif %}
+    'profiles/{{profile}}/modules/contrib/memcache/memcache.inc',
   );
 
   // Memcache lock file location.
-  $conf['lock_inc'] = 'profiles/express/modules/contrib/memcache/memcache-lock.inc';
+  $conf['lock_inc'] = 'profiles/{{profile}}/modules/contrib/memcache/memcache-lock.inc';
 
   // Setup cache_form bin.
   $conf['cache_class_cache_form'] = 'DrupalDatabaseCache';
 
+{% if environment != 'local' %}
   // Set varnish as the page cache.
   $conf['cache_class_cache_page'] = 'VarnishCache';
+{% endif %}
 
   // Set memcache as default.
   $conf['cache_default_class'] = 'MemCacheDrupal';
@@ -102,35 +107,24 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
   // No IP blocking from the UI, we'll take care of that at a higher level.
   $conf['blocked_ips'] = array();
 
-  // Enable the environment indicator.
-  $conf['environment_indicator_enabled'] = TRUE;
-
   // Change colors and text for environment indicator based on ENV var.
   if (isset($_SERVER['WWWNG_ENV'])) {
     global $base_url;
 
     switch($_SERVER['WWWNG_ENV']) {
       case 'cust_dev':
-        $conf['environment_indicator_text'] = 'DEV';
-        $conf['environment_indicator_color'] = 'green';
         $base_url .= 'https://www-dev.ucdenver.edu';
         break;
 
       case 'cust_test':
-        $conf['environment_indicator_text'] = 'TEST';
-        $conf['environment_indicator_color'] = 'yellow';
         $base_url .= 'https://clas-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
-        $conf['environment_indicator_text'] = 'PRODUCTION';
-        $conf['environment_indicator_color'] = 'red';
         $base_url .= 'https://clas.ucdenver.edu';
         break;
 
       case 'express_local':
-        $conf['environment_indicator_text'] = 'LOCAL';
-        $conf['environment_indicator_color'] = 'grey';
         $base_url .= 'https://express.local';
         break;
 
@@ -143,15 +137,13 @@ if (isset($_SERVER["WWWNG_ENV"]) || PHP_SAPI === "cli") {
 
 // Memcache
 $conf['memcache_key_prefix'] = $conf['cu_sid'];
-{% if environment != 'local' %}
 $conf['memcache_servers'] = array(
   {% for ip in memcache_servers -%}
   '{{ip}}' => 'default',
   {% endfor %}
 );
-{% endif %}
 
-
+{% if environment != 'local' %}
 // Varnish
 $conf['reverse_proxy'] = TRUE;
 $conf['reverse_proxy_addresses'] = array({% for ip in reverse_proxies -%}'{{ip}}',{% endfor %});
@@ -163,19 +155,17 @@ $conf['varnish_version'] = 4;
 {% if environment == 'production' %}
   $conf['varnish_control_key'] = substr(file_get_contents('/etc/varnish/secret'),0,-1);
 {% endif %}
+{% endif %}
 
-
-
-
+{% if environment in ['local','dev'] %}
+$conf['drupal_http_request_fails'] = FALSE;
+{% endif %}
 // Google Analytics
 $conf['googleanalytics_account'] = 'UA-733655-8';
 
-// cu_classes_bundle API variables.
-$conf['cu_class_import_api_username'] = "CU_WS_CLASSSRCH_UCB_CUOL";
-$conf['cu_class_import_api_password'] = "YEF9BYQSfFr8UXNmDvM5";
-$conf['cu_class_import_institutions'] = array('B-CUBLD' => 'B-CUBLD');
-
-
+{% if environment == 'local' %}
+$conf['error_level'] = 2;
+{% endif %}
 
 /**
  * Include a post local settings file if it exists.
