@@ -167,15 +167,13 @@ if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || PHP_SAPI ===
     switch($_SERVER['WWWNG_BIZ']) {
 
       case 'cust_test':
-        $conf['environment_indicator_text'] = 'TEST';
-        $conf['environment_indicator_color'] = 'yellow';
         $base_url .= 'https://biz-test.ucdenver.pvt';
+        $cookie_domain = '.biz-test.ucdenver.pvt';
         break;
 
       case 'cust_prod':
-        $conf['environment_indicator_text'] = 'PRODUCTION';
-        $conf['environment_indicator_color'] = 'red';
         $base_url .= 'https://biz.ucdenver.edu';
+        $cookie_domain = '.biz.ucdenver.edu';
         break;
 
     }
