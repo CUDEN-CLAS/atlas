@@ -26,7 +26,7 @@ from atlas.config import (ATLAS_LOCATION, ENVIRONMENT, SSH_USER, CODE_ROOT, SITE
                           SITE_DOWN_PATH, LOAD_BALANCER, SSL_VERIFICATION)
 from atlas.config_servers import (SERVERDEFS, NFS_MOUNT_LOCATION, API_URLS,
                                   VARNISH_CONTROL_TERMINALS, LOAD_BALANCER_CONFIG_FILES,
-                                  LOAD_BALANCER_CONFIG_GROUP, BASE_URLS, ATLAS_LOGGING_URLS)
+                                  LOAD_BALANCER_CONFIG_GROUP, BASE_URLS)
 
 # Setup a sub-logger. See tasks.py for longer comment.
 log = logging.getLogger('atlas.fabric_tasks')
@@ -578,7 +578,7 @@ def create_settings_files(site):
     atlas_url = '{0}/'.format(API_URLS[ENVIRONMENT])
     new_atlas_env = 'osr-{0}-https'.format(ENVIRONMENT)
     new_atlas_url = '{0}/'.format(API_URLS[new_atlas_env])
-    atlas_logging_url = ATLAS_LOGGING_URLS[ENVIRONMENT]
+    #atlas_logging_url = ATLAS_LOGGING_URLS[ENVIRONMENT]
     database_password = utilities.decrypt_string(site['db_key'])
 
     profile = utilities.get_single_eve('code', site['code']['profile'])
@@ -598,7 +598,7 @@ def create_settings_files(site):
         'atlas_id': atlas_id,
         'atlas_url': atlas_url,
         'new_atlas_url': new_atlas_url,
-        'atlas_logging_url': atlas_logging_url,
+        #'atlas_logging_url': atlas_logging_url,
         'atlas_username': SERVICE_ACCOUNT_USERNAME,
         'atlas_password': SERVICE_ACCOUNT_PASSWORD,
         'path': site_path,
