@@ -105,22 +105,6 @@ def restore_backup(backup_id):
     return response
 
 
-@app.route('/backup/<string:backup_id>/download', methods=['GET'])
-# TODO: Test what happens with 404 for backup_id
-@requires_auth('backup')
-def download_backup(backup_id):
-    """
-    Return URLs to download the database and files
-    """
-    app.logger.info('Backup | Download | ID - %s', backup_id)
-    backup_record = utilities.get_single_eve('backup', backup_id)
-    app.logger.debug('Backup | Download | Backup record - %s', backup_record)
-    urls = []
-    urls.append('{0}/download/{1}'.format(API_URLS[ENVIRONMENT], backup_record['files']))
-    urls.append('{0}/download/{1}'.format(API_URLS[ENVIRONMENT], backup_record['database']))
-    return jsonify(result=urls)
-
-
 @app.route('/sites/<string:site_id>/backup', methods=['POST'])
 # TODO: Test what happens with 404 for site_id
 @requires_auth('backup')
@@ -153,24 +137,53 @@ def sites_statistics():
     express_sites = express_result['_items']
     agg = {}
     count = Counter()
-    bundle = Counter()
-    bundle_total = 0
+    group = Counter()
     ## Total by state
     for site in express_sites:
         count[site['status']] += 1
-        if site['code'].get('pacakge'):
-            bundle_total += 1
-    agg['express'] = {'status': dict(count)}
+        group[site['update_group']] += 1
+    agg['express'] = {
+        'status': dict(count),
+        'update_group': dict(group)
+    }
     # Total
     agg['express']['status']['total'] = express_result['_meta']['total']
-    ## Total with bundles
-    agg['express']['bundles'] = {'total': bundle_total}
     # Legacy
     ## Total routes
     agg['legacy'] = {'total': legacy_result['_meta']['total']}
 
     response = make_response(jsonify(agg))
     return response
+
+
+@app.route('/sites/<string:site_id>/heal_packages', methods=['POST'])
+# TODO: Test what happens with 404 for site_id
+@requires_auth('sites')
+def heal_instance(site_id):
+    """
+    Create a backup of an instance.
+    :param machine_name: id of instance to restore
+    """
+    app.logger.debug('Site | Heal | Site ID - %s', site_id)
+    instance = utilities.get_single_eve('sites', site_id)
+    tasks.heal_instance.delay(instance)
+    return make_response('Instance heal has been initiated.')
+
+
+@app.route('/commands/heal_instance_packages', methods=['POST'])
+def get_command():
+    """
+    Get a single command.
+    :param machine_name: command to return a definition for.
+    """
+    # Loop through the commands list and grab the one we want
+    app.logger.debug('Command | Execute | Heal instances')
+    instance_query = 'where={"type":"express","f5only":false}&max_results=2000'
+    instances = utilities.get_eve('sites', instance_query)
+    for instance in instances['_items']:
+        tasks.heal_instance.delay(instance)
+        continue
+    return make_response('Command "Heal Instances" has been initiated.')
 
 
 # Specific callbacks.
