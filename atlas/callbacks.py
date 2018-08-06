@@ -18,15 +18,15 @@ log = logging.getLogger('atlas.callbacks')
 
 
 # Callbacks
-def pre_post_callback(resource, request):
+def pre_post(resource, request):
     """
     :param resource: resource accessed
     :param request: flask.request object
     """
-    log.debug('POST | Resource - %s | %s', resource, request)
+    log.debug('POST | Resource - %s | Request - %s, | request.data - %s', resource, str(request), request.data)
 
 
-def pre_post_sites_callback(request):
+def pre_post_sites(request):
     """
     :param request: flask.request object
     """
@@ -48,7 +48,7 @@ def pre_post_sites_callback(request):
         abort(409, 'Error: There is no current profile.')
 
 
-def pre_delete_code_callback(request, lookup):
+def pre_delete_code(request, lookup):
     """
     Make sure no sites are using the code.
 
@@ -82,7 +82,7 @@ def pre_delete_code_callback(request, lookup):
         abort(409, 'A conflict happened while processing the request. Code item is in use by one or more sites.')
 
 
-def on_insert_sites_callback(items):
+def on_insert_sites(items):
     """
     Assign a sid, an update group, db_key, any missing code, and date fields.
 
@@ -102,22 +102,22 @@ def on_insert_sites_callback(items):
             # The 'get' method checks if the key exists.
             if item.get('code'):
                 if not item['code'].get('core'):
-                    item['code']['core'] = utilities.get_current_code(
-                        name=DEFAULT_CORE, code_type='core')
+                    item['code']['core'] = ObjectId(utilities.get_current_code(
+                        name=DEFAULT_CORE, code_type='core'))
                 if not item['code'].get('profile'):
-                    item['code']['profile'] = utilities.get_current_code(
-                        name=DEFAULT_PROFILE, code_type='profile')
+                    item['code']['profile'] = ObjectId(utilities.get_current_code(
+                        name=DEFAULT_PROFILE, code_type='profile'))
             else:
                 item['code'] = {}
-                item['code']['core'] = utilities.get_current_code(
-                    name=DEFAULT_CORE, code_type='core')
-                item['code']['profile'] = utilities.get_current_code(
-                    name=DEFAULT_PROFILE, code_type='profile')
+                item['code']['core'] = ObjectId(utilities.get_current_code(
+                    name=DEFAULT_CORE, code_type='core'))
+                item['code']['profile'] = ObjectId(utilities.get_current_code(
+                    name=DEFAULT_PROFILE, code_type='profile'))
             date_json = '{{"created":"{0} GMT"}}'.format(item['_created'])
             item['dates'] = json.loads(date_json)
 
 
-def on_inserted_sites_callback(items):
+def on_inserted_sites(items):
     """
     Provision Express instances.
 
@@ -137,9 +137,11 @@ def on_inserted_sites_callback(items):
             item['statistics'] = str(statistics['_id'])
 
             tasks.site_provision.delay(item)
+        if item['type'] == 'legacy' or item['f5only']:
+            tasks.update_f5.delay()
 
 
-def on_insert_code_callback(items):
+def on_insert_code(items):
     """
     Deploy code onto servers as the items are created.
 
@@ -171,7 +173,7 @@ def on_insert_code_callback(items):
         tasks.code_deploy.delay(item)
 
 
-def pre_delete_sites_callback(request, lookup):
+def pre_delete_sites(request, lookup):
     """
     Remove site from servers right before the item is removed.
 
@@ -183,7 +185,7 @@ def pre_delete_sites_callback(request, lookup):
     tasks.site_remove.delay(site)
 
 
-def on_delete_item_code_callback(item):
+def on_delete_item_code(item):
     """
     Remove code from servers right before the item is removed.
 
@@ -193,7 +195,7 @@ def on_delete_item_code_callback(item):
     tasks.code_remove.delay(item)
 
 
-def on_update_code_callback(updates, original):
+def on_update_code(updates, original):
     """
     Update code on the servers as the item is updated.
 
@@ -240,7 +242,7 @@ def on_update_code_callback(updates, original):
         tasks.code_update.delay(updated_item, original)
 
 
-def on_update_sites_callback(updates, original):
+def on_update_sites(updates, original):
     """
     Update an instance.
 
@@ -276,14 +278,14 @@ def on_update_sites_callback(updates, original):
                     date_json = '{{"locked":""}}'
                 elif updates['status'] == 'take_down':
                     date_json = '{{"taken_down":"{0} GMT"}}'.format(updates['_updated'])
-                
+
                 updates['dates'] = json.loads(date_json)
 
         log.debug('sites | Update | Ready for Celery | Site - %s | Updates - %s', site, updates)
         tasks.site_update.delay(site=site, updates=updates, original=original)
 
 
-def on_update_commands_callback(updates, original):
+def on_update_commands(updates, original):
     """
     Run commands when API endpoints are called.
 
@@ -296,7 +298,7 @@ def on_update_commands_callback(updates, original):
     tasks.command_prepare.delay(item)
 
 
-def on_updated_code_callback(updates, original):
+def on_updated_code(updates, original):
     """
     Find instances that use this code asset and re-add them.
 
@@ -313,15 +315,22 @@ def on_updated_code_callback(updates, original):
     if code_type in ['module', 'theme', 'library']:
         code_type = 'package'
 
-    if updates.has_key('meta') and (updates['meta'].has_key('name') or updates['meta'].has_key('version') or updates['meta'].has_key('code_type')):
-        update_sites = True
+    if updates.has_key('meta'):
+        if updates['meta']['name'] != original['meta']['name'] or updates['meta']['version'] != original['meta']['version'] or updates['meta']['code_type'] != original['meta']['code_type']:
+            update_sites = True
+            log.debug('code | on updated | Found meta data changes | %s', updates['meta'])
+        else:
+            log.debug('code | on updated | Found no meta changes that require an update')
+            update_sites = False
     elif updates.has_key('commit_hash') or updates.has_key('git_url'):
         update_sites = True
+        log.debug('code | on updated | Found git data changes')
     else:
+        log.debug('code | on updated | Found no changes')
         update_sites = False
-        
-    if update_sites:
 
+    if update_sites:
+        log.debug('code | on updated | Preparing to update instances')
         query = 'where={{"code.{0}":"{1}"}}'.format(code_type, original['_id'])
         sites_get = utilities.get_eve('sites', query)
 

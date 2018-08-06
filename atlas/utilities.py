@@ -35,7 +35,6 @@ log = logging.getLogger('atlas.utilities')
 if ATLAS_LOCATION not in sys.path:
     sys.path.append(ATLAS_LOCATION)
 
-
 class AtlasBasicAuth(BasicAuth):
     """
     Basic Authentication
@@ -252,7 +251,7 @@ def get_eve(resource, query=None):
     return r.json()
 
 
-def get_single_eve(resource, id):
+def get_single_eve(resource, id, version=None, env=ENVIRONMENT):
     """
     Make calls to the Atlas API.
 
@@ -260,7 +259,10 @@ def get_single_eve(resource, id):
     :param id: _id string
     :return: dict of items that match the query string.
     """
-    url = "{0}/{1}/{2}".format(API_URLS[ENVIRONMENT], resource, id)
+    if version:
+        url = "{0}/{1}/{2}?version={3}".format(API_URLS[env], resource, id, version)
+    else:
+        url = "{0}/{1}/{2}".format(API_URLS[env], resource, id)
     log.debug('utilities | Get Eve Single | url - %s', url)
 
     try:
@@ -333,11 +335,11 @@ def get_current_code(name, code_type):
 
 def get_code(name, code_type=''):
     """
-    Get the current code item for a given name and code_type.
+    Get the code item(s) for a given name and code_type.
 
     :param name: string
     :param code_type: string
-    :return: _id of the item.
+    :return: response object
     """
     if code_type:
         query = 'where={{"meta.name":"{0}","meta.code_type":"{1}"}}'.format(name, code_type)
@@ -415,14 +417,16 @@ def rebalance_update_groups(item):
     if not sites['_meta']['total'] == 0:
         for site in sites['_items']:
             # Only update if the group is less than 11.
-            if site['update_group'] < 11:
+            log.debug('Rebalance | Launched counter - %s | Installed counter- %s | Site - %s | Site update group - %s', launched_update_group, installed_update_group, site['_id'], site['update_group'])
+            if site['update_group'] < 5:
                 if site['status'] == 'launched':
                     patch_payload = '{{"update_group": {0}}}'.format(launched_update_group)
-                    if launched_update_group < 10:
+                    log.debug('Rebalance | Site - %s | Site update group changed to - %s', site['_id'], launched_update_group)
+                    if launched_update_group < 5:
                         launched_update_group += 1
                     else:
                         launched_update_group = 0
-                if site['status'] == 'installed':
+                else:
                     patch_payload = '{{"update_group": {0}}}'.format(installed_update_group)
                     if installed_update_group < 2:
                         installed_update_group += 1
@@ -430,6 +434,8 @@ def rebalance_update_groups(item):
                         installed_update_group = 0
                 if patch_payload:
                     patch_eve('sites', site['_id'], patch_payload)
+                log.debug('Rebalance | Site - %s | Site update group changed to - %s', site['_id'], patch_payload)
+                log.debug('Rebalance | Launched counter - %s | Installed counter- %s | End of loop', launched_update_group, installed_update_group)
 
 
 def post_to_slack_payload(payload):
@@ -460,16 +466,47 @@ def send_email(email_message, email_subject, email_to):
     :param email_subject: content of the subject line
     :param email_to: list of email address(es) the email will be sent to
     """
+    log.debug('Send email | Message - %s | Subject - %s | To - %s', email_message, email_subject, email_to)
     if SEND_NOTIFICATION_EMAILS:
         # We only send plaintext to prevent abuse.
         msg = MIMEText(email_message, 'plain')
         msg['Subject'] = email_subject
         msg['From'] = SEND_NOTIFICATION_FROM_EMAIL
         final_email_to = [x for x in email_to if x not in EMAIL_USERS_EXCLUDE]
+        log.info('Send email | Final To - %s', final_email_to)
         msg['To'] = ", ".join(final_email_to)
 
-        s = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
-        s.starttls()
-        s.login(EMAIL_USERNAME, EMAIL_PASSWORD)
-        s.sendmail(SEND_NOTIFICATION_FROM_EMAIL, final_email_to, msg.as_string())
-        s.quit()
+        if final_email_to:
+            s = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+            s.starttls()
+            s.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            s.sendmail(SEND_NOTIFICATION_FROM_EMAIL, final_email_to, msg.as_string())
+            s.quit()
+
+
+def package_import(site, env=ENVIRONMENT):
+    """
+    Take a site record, lookup the packages, and return a list of packages to add to the instance.
+    :return: List of package IDs
+    """
+    if 'package' in site['code']:
+        # Start with an empty list
+        package_list = []
+        for package in site['code']['package']:
+            package_result = get_single_eve('code', package, env=env)
+            log.debug(
+                'Utilities | Package import | Checking for packages | Request result - %s', package_result)
+            if package_result['_deleted']:
+                current_package = get_current_code(
+                    package_result['meta']['name'], package_result['meta']['code_type'])
+                log.debug('Utilities | Package import | Getting current version of package - %s', current_package)
+                if current_package:
+                    package_list.append(current_package)
+                else:
+                    raise Exception('There is no current version of {0}. This backup cannot be restored.'.format(
+                        package_result['meta']['name']))
+            else:
+                package_list.append(package_result['_id'])
+    else:
+        package_list = None
+    return package_list
