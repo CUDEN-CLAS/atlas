@@ -212,7 +212,7 @@ SITES_SCHEMA = {
         'schema': {
             'page_cache_maximum_age': {
                 'type': 'integer',
-                'default': 10800,
+                'default': 43200,
             },
             'siteimprove_site': {
                 'type': 'integer',
@@ -506,7 +506,7 @@ STATISTICS_SCHEMA = {
                 'type': 'dict',
                 'nullable': True,
                 'schema': {
-                    'site_owner': {
+                    'site_contact': {
                         'type': 'list',
                         'nullable': True,
                     },
@@ -544,7 +544,7 @@ STATISTICS_SCHEMA = {
                 'type': 'dict',
                 'nullable': True,
                 'schema': {
-                    'site_owner': {
+                    'site_contact': {
                         'type': 'list',
                         'nullable': True,
                     },
@@ -586,7 +586,7 @@ STATISTICS_SCHEMA = {
                 'type': 'dict',
                 'nullable': True,
                 'schema': {
-                    'site_owner': {
+                    'site_contact': {
                         'type': 'integer',
                         'nullable': True,
                     },
