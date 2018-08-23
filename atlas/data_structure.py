@@ -506,7 +506,7 @@ STATISTICS_SCHEMA = {
                 'type': 'dict',
                 'nullable': True,
                 'schema': {
-                    'site_contact': {
+                    'site_owner': {
                         'type': 'list',
                         'nullable': True,
                     },
@@ -544,7 +544,7 @@ STATISTICS_SCHEMA = {
                 'type': 'dict',
                 'nullable': True,
                 'schema': {
-                    'site_contact': {
+                    'site_owner': {
                         'type': 'list',
                         'nullable': True,
                     },
@@ -586,7 +586,7 @@ STATISTICS_SCHEMA = {
                 'type': 'dict',
                 'nullable': True,
                 'schema': {
-                    'site_contact': {
+                    'site_owner': {
                         'type': 'integer',
                         'nullable': True,
                     },
