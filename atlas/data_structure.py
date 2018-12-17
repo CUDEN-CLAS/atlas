@@ -212,7 +212,7 @@ SITES_SCHEMA = {
         'schema': {
             'page_cache_maximum_age': {
                 'type': 'integer',
-                'default': 21600,
+                'default': 43200,
             },
             'siteimprove_site': {
                 'type': 'integer',
