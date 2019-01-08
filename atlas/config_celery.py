@@ -25,21 +25,21 @@ CELERY_ROUTES = {
 CELERYBEAT_SCHEDULE = {
     'launched_cron': {
         'task': 'atlas.tasks.cron',
-        'schedule': timedelta(minutes=60),
+        'schedule': timedelta(hours=12),
         'kwargs': {
             "status": "launched",
         },
     },
     'locked_cron': {
         'task': 'atlas.tasks.cron',
-        'schedule': timedelta(hours=6),
+        'schedule': timedelta(hours=24),
         'kwargs': {
             "status": "locked",
         },
     },
     'installed_cron': {
         'task': 'atlas.tasks.cron',
-        'schedule': timedelta(hours=3),
+        'schedule': timedelta(hours=24),
         'kwargs': {
             "status": "installed",
         },
