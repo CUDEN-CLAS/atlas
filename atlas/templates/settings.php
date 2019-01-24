@@ -160,6 +160,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || PHP_SAPI ===
     }
     ini_set('session.cookie_lifetime', 93600);
     ini_set('session.cookie_path', '/' . $path);
+    $conf['googleanalytics_account'] = 'UA-733655-8';
   }
   if (isset($_SERVER['WWWNG_BIZ'])) {
     global $base_url;
@@ -182,6 +183,7 @@ if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || PHP_SAPI ===
     }
     ini_set('session.cookie_lifetime', 93600);
     ini_set('session.cookie_path', '/' . $path);
+    $conf['googleanalytics_account'] = 'UA-4027023-7';
   }
 }
 
@@ -211,7 +213,7 @@ $conf['varnish_version'] = 4;
 $conf['drupal_http_request_fails'] = FALSE;
 {% endif %}
 // Google Analytics
-$conf['googleanalytics_account'] = 'UA-733655-8';
+//$conf['googleanalytics_account'] = 'UA-733655-8';
 
 {% if environment == 'local' %}
 $conf['error_level'] = 2;
