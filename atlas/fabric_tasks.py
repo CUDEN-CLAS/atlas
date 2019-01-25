@@ -558,6 +558,8 @@ def create_settings_files(site):
     sid = site['sid']
     if site['pool'] == 'poolb-homepage':
         site_path = ''
+    elif site['pool'] == 'poolb-bizhomepage':
+        site_path = ''
     elif 'path' in site:
         site_path = site['path']
     else:

@@ -163,7 +163,7 @@ SITES_SCHEMA = {
     },
     'type': {
         'type': 'string',
-        'allowed':  ['express', 'legacy', 'homepage'],
+        'allowed':  ['express', 'legacy', 'homepage',],
         'default': 'express',
     },
     'status': {
@@ -195,7 +195,9 @@ SITES_SCHEMA = {
         'type': 'string',
         'allowed': [
             'poolb-express',
+            'poolb-bizexpress',
             'poolb-homepage',
+            'poolb-bizhomepage',
             'WWWLegacy',
             'pool-varnish-new'],
         'default': 'poolb-express',

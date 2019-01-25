@@ -18,7 +18,7 @@ from atlas import fabric_tasks
 from atlas import utilities
 from atlas import config_celery
 from atlas.config import (ENVIRONMENT, WEBSERVER_USER, DESIRED_SITE_COUNT)
-from atlas.config_servers import (BASE_URLS, API_URLS)
+from atlas.config_servers import (BASE_URLS, BUSINESS_URLS, API_URLS)
 
 # Setup a sub-logger
 # Best practice is to setup sub-loggers rather than passing the main logger between different parts of the application.
@@ -738,8 +738,14 @@ def command_run(site, command, single_server, user=None, batch_id=None, batch_co
 
     # 'match' searches for strings that begin with
     if command.startswith('drush'):
-        if site['type'] is not 'homepage':
+        if site['pool'] == 'poolb-bizexpress':
+            uri = BUSINESS_URLS[ENVIRONMENT] + '/' + site['path']
+        elif site['pool'] == 'poolb-express':
             uri = BASE_URLS[ENVIRONMENT] + '/' + site['path']
+        elif site['pool'] == 'poolb-homepage':
+            uri = BASE_URLS[ENVIRONMENT]
+        elif site['pool'] == 'poolb-bizhomepage':
+            uri = BUSINESS_URLS[ENVIRONMENT]
         else:
             uri = BASE_URLS[ENVIRONMENT]
         # Add user prefix and URI suffix
@@ -804,8 +810,14 @@ def cron_run(site):
     log.info('Site - %s | %s', site['sid'], site)
     start_time = time.time()
 
-    if site['pool'] != 'poolb-homepage':
+    if site['pool'] == 'poolb-express':
         uri = BASE_URLS[ENVIRONMENT] + '/' + site['path']
+    elif site['pool'] == 'poolb-bizexpress':
+        uri = BUSINESS_URLS[ENVIRONMENT] + '/' + site['path']
+    elif site['pool'] == 'poolb-homepage':
+        uri = BASE_URLS[ENVIRONMENT]
+    elif site['pool'] == 'poolb-bizhomepage':
+        uri = BUSINESS_URLS[ENVIRONMENT]
     else:
         uri = BASE_URLS[ENVIRONMENT]
     log.debug('Site - %s | uri - %s', site['sid'], uri)
