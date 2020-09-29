@@ -45,7 +45,7 @@ if TRAILING_SLASH.search(SITES_WEB_ROOT):
 
 
 # This allows us to use a self signed cert for local dev.
-SSL_VERIFICATION = "/etc/pki/tls/certs"
+SSL_VERIFICATION = "/etc/pki/tls/certs/InstantSSL.ca-bundle"
 if ENVIRONMENT == 'local':
     SSL_VERIFICATION = False
 
