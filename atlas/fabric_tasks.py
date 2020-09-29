@@ -585,8 +585,10 @@ def create_settings_files(site):
 
     profile = utilities.get_single_eve('code', site['code']['profile'])
     profile_name = profile['meta']['name']
-
-    if ('cse_creator' in site['settings']) and ('cse_id' in site['settings']):
+    
+    if ('cse_cx_id' in site['settings']):
+        google_cse_csx = site['settings']['cse_cx_id']
+    elif 'cse_creator' in site['settings'] and 'cse_id' in site['settings']:
         google_cse_csx = site['settings']['cse_creator'] + ':' + site['settings']['cse_id']
     else:
         google_cse_csx = None

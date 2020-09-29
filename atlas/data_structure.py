@@ -228,6 +228,9 @@ SITES_SCHEMA = {
             'cse_id': {
                 'type': 'string',
             },
+            'cse_cx_id': {
+                'type': 'string',
+            },
         },
     },
     'tag': {
