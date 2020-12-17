@@ -56,6 +56,14 @@ if (isset($launched) && $launched && isset($conf["cu_path"])) {
       exit();
     }
   }
+  if (isset($_SERVER['WWWNG_TS'])) {
+    if ($_SERVER['HTTP_HOST'] == 'thinqstudio.ucdenver.edu' &&
+      strpos($_SERVER['REQUEST_URI'], $conf['cu_sid']) !== false) {
+      header('HTTP/1.0 301 Moved Permanently');
+      header('Location: https://thinqstudio.ucdenver.edu'. str_replace($conf['cu_sid'], $conf["cu_path"], $_SERVER['REQUEST_URI']));
+      exit();
+    }
+  }
 }
 
 $host = $_SERVER['HTTP_HOST'];
@@ -65,7 +73,7 @@ $conf['page_compression'] = 0;
 
 // Set up environment specific variables for wwwng.
 // If wwwng env isset or php executed through cli (drush).
-if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || PHP_SAPI === "cli") {
+if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || isset($_SERVER["WWWNG_TS"]) || PHP_SAPI === "cli") {
 
   // Never allow updating modules through UI.
   $conf['allow_authorize_operations'] = FALSE;
@@ -184,6 +192,29 @@ if (isset($_SERVER["WWWNG_ENV"]) || isset($_SERVER["WWWNG_BIZ"]) || PHP_SAPI ===
     ini_set('session.cookie_lifetime', 93600);
     ini_set('session.cookie_path', '/' . $path);
     $conf['googleanalytics_account'] = 'UA-4027023-7';
+  }
+  if (isset($_SERVER['WWWNG_TS'])) {
+    global $base_url;
+
+    switch($_SERVER['WWWNG_TS']) {
+
+      case 'cust_test':
+        $base_url .= 'https://thinqstudio.ucdenver.edu';
+        $cookie_domain = '.thinqstudio.ucdenver.edu';
+        break;
+
+      case 'cust_prod':
+        $base_url .= 'https://thinqstudio.ucdenver.edu';
+        $cookie_domain = '.thinqstudio.ucdenver.edu';
+        break;
+
+    }
+    if ($pool != "poolb-thinqstudiohomepage") {
+      $base_url .= '/' . $path;
+    }
+    ini_set('session.cookie_lifetime', 93600);
+    ini_set('session.cookie_path', '/' . $path);
+    $conf['googleanalytics_account'] = 'UA-733655-8';
   }
 }
 

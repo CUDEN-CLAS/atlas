@@ -560,6 +560,8 @@ def create_settings_files(site):
         site_path = ''
     elif site['pool'] == 'poolb-bizhomepage':
         site_path = ''
+    elif site['pool'] == 'poolb-thinqstudiohomepage':
+        site_path = ''
     elif 'path' in site:
         site_path = site['path']
     else:

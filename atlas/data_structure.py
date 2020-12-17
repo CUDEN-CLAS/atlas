@@ -198,6 +198,7 @@ SITES_SCHEMA = {
             'poolb-bizexpress',
             'poolb-homepage',
             'poolb-bizhomepage',
+            'poolb-thinqstudiohomepage',
             'WWWLegacy',
             'pool-varnish-new'],
         'default': 'poolb-express',

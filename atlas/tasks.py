@@ -18,7 +18,7 @@ from atlas import fabric_tasks
 from atlas import utilities
 from atlas import config_celery
 from atlas.config import (ENVIRONMENT, WEBSERVER_USER, DESIRED_SITE_COUNT)
-from atlas.config_servers import (BASE_URLS, BUSINESS_URLS, API_URLS)
+from atlas.config_servers import (BASE_URLS, BUSINESS_URLS, THINQSTUDIO_URLS, API_URLS)
 
 # Setup a sub-logger
 # Best practice is to setup sub-loggers rather than passing the main logger between different parts of the application.
@@ -746,6 +746,8 @@ def command_run(site, command, single_server, user=None, batch_id=None, batch_co
             uri = BASE_URLS[ENVIRONMENT]
         elif site['pool'] == 'poolb-bizhomepage':
             uri = BUSINESS_URLS[ENVIRONMENT]
+        elif site['pool'] == 'poolb-thinqstudiohomepage':
+            uri = THINQSTUDIO_URLS[ENVIRONMENT]
         else:
             uri = BASE_URLS[ENVIRONMENT]
         # Add user prefix and URI suffix
@@ -818,6 +820,8 @@ def cron_run(site):
         uri = BASE_URLS[ENVIRONMENT]
     elif site['pool'] == 'poolb-bizhomepage':
         uri = BUSINESS_URLS[ENVIRONMENT]
+    elif site['pool'] == 'poolb-thinqstudiohomepage':
+        uri = THINQSTUDIO_URLS[ENVIRONMENT]
     else:
         uri = BASE_URLS[ENVIRONMENT]
     log.debug('Site - %s | uri - %s', site['sid'], uri)
